@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RPG Oracle — Universal Oracle</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../core/theme.css">
+<style>
+main { padding: 14px; max-width: 1100px; margin: 0 auto;
+  display: flex; flex-direction: column; gap: 14px; }
+
+.genre-bar {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--panel-2);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 14px;
+  flex-wrap: wrap;
+}
+.genre-bar label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; }
+.genre-bar select {
+  background: var(--panel); color: var(--text); border: 1px solid var(--border);
+  padding: 5px 10px; border-radius: 4px; font: inherit; cursor: pointer;
+}
+.genre-bar select:hover { border-color: var(--accent); }
+.genre-bar .tone { color: var(--muted); font-size: 12px; font-style: italic; flex: 1; }
+.genre-bar a.combat {
+  color: var(--accent); text-decoration: none; font-size: 12px;
+  border: 1px solid var(--accent-soft); padding: 4px 10px; border-radius: 4px;
+}
+.genre-bar a.combat:hover { background: var(--accent-soft); border-color: var(--accent); }
+
+.chaos {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--panel); border: 1px solid var(--accent-soft);
+  border-radius: 4px; padding: 4px 8px;
+}
+.chaos .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+.chaos .val { font-weight: 700; font-size: 16px; min-width: 22px; text-align: center; }
+.chaos .val.low  { color: var(--green); }
+.chaos .val.mid  { color: var(--accent); }
+.chaos .val.high { color: var(--red); }
+.chaos button { padding: 2px 8px; font-size: 14px; line-height: 1;
+  background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+  border-radius: 4px; cursor: pointer; }
+.chaos button:hover { border-color: var(--accent); }
+
+.panels { display: grid; gap: 14px; grid-template-columns: 1fr; }
+@media (min-width: 720px) { .panels { grid-template-columns: 1fr 1fr; } }
+
+.panel-card { background: var(--panel); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px; min-height: 140px;
+  display: flex; flex-direction: column; gap: 10px; }
+.panel-card h3 { margin: 0; font-size: 12px; text-transform: uppercase;
+  letter-spacing: 1.2px; color: var(--accent); border-bottom: 1px solid var(--border);
+  padding-bottom: 5px; display: flex; align-items: center; gap: 6px; }
+.panel-card h3 .actions { margin-left: auto; display: flex; gap: 4px; }
+.panel-card h3 button { padding: 3px 9px; font-size: 11px; }
+.panel-card .out { font-size: 14px; line-height: 1.5; min-height: 28px; }
+.panel-card .out .empty { color: var(--muted); font-style: italic; }
+.panel-card .meta { color: var(--muted); font-size: 11px; }
+.panel-card .yesno-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.panel-card .yesno-row button { flex: 1; min-width: 76px; }
+.panel-card .answer { font-size: 28px; font-weight: 800; text-align: center; padding: 12px;
+  border-radius: 6px; letter-spacing: 0.04em; }
+.panel-card .answer.yes  { background: #1c3a1f; color: #6dd47a; }
+.panel-card .answer.no   { background: #3a1c1c; color: #ef8888; }
+.panel-card .answer.crit { text-shadow: 0 0 12px currentColor; }
+.panel-card .ratio { text-align: center; color: var(--muted); font-size: 11px; }
+
+.event-line { font-size: 16px; line-height: 1.4; }
+.event-line .verb  { color: var(--red); font-weight: 700; }
+.event-line .adj   { color: var(--accent); font-weight: 700; }
+.event-line .noun  { color: var(--blue); font-weight: 700; }
+
+.npc-row { display: grid; gap: 6px; grid-template-columns: 1fr 1fr; }
+.npc-row > div { background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 6px 10px; }
+.npc-row .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.npc-row .v { font-weight: 700; font-size: 15px; margin-top: 2px; }
+
+.reaction-band { padding: 8px 12px; border-radius: 6px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em; text-align: center; }
+.reaction-band.hostile  { background: #4a1a1a; color: #ff8a8a; }
+.reaction-band.wary     { background: #4a3a1a; color: #f1c14a; }
+.reaction-band.neutral  { background: #2c3138; color: var(--text); }
+.reaction-band.friendly { background: #1a4a2a; color: #6dd47a; }
+.reaction-band.helpful  { background: #1a4a4a; color: #6ddccc; }
+
+.sensory-grid { display: grid; gap: 4px; grid-template-columns: 1fr 1fr; }
+.sensory-grid > div { font-size: 13px; line-height: 1.4;
+  background: var(--panel-2); border-radius: 4px; padding: 6px 10px; }
+.sensory-grid b { color: var(--accent); font-size: 10px; text-transform: uppercase;
+  letter-spacing: 1px; display: block; margin-bottom: 2px; }
+
+.gen-row { display: grid; gap: 6px; }
+.gen-row .names { font-size: 15px; }
+.gen-row .names span { display: inline-block; background: var(--panel-2);
+  border: 1px solid var(--border); padding: 3px 10px; border-radius: 4px; margin: 0 4px 4px 0; }
+.gen-row .loc { font-size: 14px; line-height: 1.4; }
+.gen-row .loc b { color: var(--accent); font-size: 10px; text-transform: uppercase;
+  letter-spacing: 1px; display: block; margin-bottom: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>RPG Oracle</h1>
+  <span class="sub">— GMA-style oracle with six genre packs</span>
+  <span class="spacer"></span>
+  <a href="../index.html" class="home">← Menu</a>
+  <span class="chaos" title="Chaos factor 1–23. Higher = more weird/scene-altering events.">
+    <span class="label">Chaos</span>
+    <button id="chaos-down" type="button">−</button>
+    <span class="val mid" id="chaos-val">12</span>
+    <button id="chaos-up" type="button">+</button>
+  </span>
+  <button id="btnHelp">Help</button>
+</header>
+
+<div class="genre-bar">
+  <label for="genreSel">Genre</label>
+  <select id="genreSel">
+    <option value="fantasy">Basic Fantasy (LOTR / D&D)</option>
+    <option value="postapoc">Post-Apocalyptic</option>
+    <option value="cyberpunk">Cyberpunk</option>
+    <option value="weird-horror">Weird Horror</option>
+    <option value="steampunk">Steampunk</option>
+    <option value="scifi">Science Fiction</option>
+  </select>
+  <span class="tone" id="genreTone"></span>
+  <a href="../skirmish/index.html" class="combat" title="When fights break out, hand off to the Skirmish AI deck.">⚔ Combat → Skirmish</a>
+</div>
+
+<main>
+
+  <div class="panel-card">
+    <h3>Yes / No
+      <span class="actions">
+        <button data-q="yn-good">Probably</button>
+        <button data-q="yn-even">Unsure</button>
+        <button data-q="yn-bad">Probably not</button>
+      </span>
+    </h3>
+    <div id="ynOut" class="out"><span class="empty">Rate the question, then read the answer.</span></div>
+  </div>
+
+  <div class="panels">
+
+    <div class="panel-card">
+      <h3>Random Event
+        <span class="actions"><button data-q="event">Draw event</button></span>
+      </h3>
+      <div id="evOut" class="out"><span class="empty">Verb + Adjective + Noun.</span></div>
+    </div>
+
+    <div class="panel-card">
+      <h3>NPC
+        <span class="actions">
+          <button data-q="reaction">Reaction</button>
+          <button data-q="motivation">Virtue + Vice</button>
+        </span>
+      </h3>
+      <div id="npcOut" class="out"><span class="empty">Reaction, virtue, vice.</span></div>
+    </div>
+
+    <div class="panel-card">
+      <h3>Scene
+        <span class="actions">
+          <button data-q="catalyst">Catalyst</button>
+          <button data-q="sensory">Sensory</button>
+        </span>
+      </h3>
+      <div id="sceneOut" class="out"><span class="empty">Inciting incident or sensory snippet.</span></div>
+    </div>
+
+    <div class="panel-card">
+      <h3>Generators
+        <span class="actions">
+          <button data-q="names">3 names</button>
+          <button data-q="location">Location</button>
+        </span>
+      </h3>
+      <div id="genOut" class="out"><span class="empty">Names + location for instant NPCs and places.</span></div>
+    </div>
+
+  </div>
+
+</main>
+
+<dialog id="helpDialog">
+<button class="x" onclick="document.getElementById('helpDialog').close()">close</button>
+<h2>RPG Oracle (Gamemaster's Apprentice style)</h2>
+<p>This deck is for solo or GMless RPG play. It answers questions; you interpret. Pick the genre that matches your campaign tone — switching genres only swaps the word lists, not the mechanics.</p>
+<h3>Yes / No</h3>
+<p>Three odds tiers. <b>Probably</b> = +6 to the chaos threshold (more YES). <b>Unsure</b> = ±0. <b>Probably not</b> = −6 (more NO). A reference number 1–23 is drawn vs the threshold. Critical rolls (11 or 22) ≤ chaos turn the answer into <b>YES!</b> or <b>NO!</b> — read it as decisive.</p>
+<h3>Random Event</h3>
+<p>Verb + Adjective + Noun. Read it as a sentence — "Betray // Hidden // Promise". Apply it to whoever is on stage, or treat it as off-stage news.</p>
+<h3>NPC</h3>
+<p><b>Reaction</b> = how this NPC feels right now (Hostile / Wary / Neutral / Friendly / Helpful). <b>Virtue + Vice</b> = what they want and what they fear, the deeper layer.</p>
+<h3>Scene</h3>
+<p><b>Catalyst</b> = a curated inciting incident to kick off a scene. <b>Sensory</b> = four lines (hear / see / feel / smell) to ground the location.</p>
+<h3>Generators</h3>
+<p><b>3 names</b> for instant NPCs. <b>Location</b> for instant places. Both pulled from the active genre pack.</p>
+<h3>Combat</h3>
+<p>This deck is built for social/scene play. When a fight breaks out, click <b>Combat → Skirmish</b> to hand off to the dedicated battlefield AI deck.</p>
+<p class="muted">State saves to <code>oracle.rpg.v1</code>.</p>
+</dialog>
+
+<script src="../core/deck.js"></script>
+<script src="../core/oracle.js"></script>
+<script src="../core/storage.js"></script>
+<script src="../core/render.js"></script>
+<script src="data.js"></script>
+<script src="packs/fantasy.js"></script>
+<script src="packs/postapoc.js"></script>
+<script src="packs/cyberpunk.js"></script>
+<script src="packs/weird-horror.js"></script>
+<script src="packs/steampunk.js"></script>
+<script src="packs/scifi.js"></script>
+<script>
+const { $, escapeHtml, rand, pick, pickN } = window.Oracle;
+const NS = "rpg";
+
+const state = window.Oracle.storage.load(NS, defaultState());
+function defaultState() { return { chaos: 12, genre: "fantasy" }; }
+function save() { window.Oracle.storage.save(NS, state); }
+
+function activePack() {
+  const packs = window.GENRE_PACKS || {};
+  return packs[state.genre] || packs.fantasy || {};
+}
+
+// ---- chaos ----
+function updateChaos() {
+  const v = state.chaos; const el = $("chaos-val");
+  el.textContent = v;
+  el.className = "val " + (v <= 7 ? "low" : v >= 16 ? "high" : "mid");
+}
+
+// ---- genre selector ----
+function setGenre(key) {
+  state.genre = key; save();
+  const p = activePack();
+  $("genreTone").textContent = p.tone || "";
+  $("genreSel").value = key;
+}
+
+// ---- panel renderers ----
+function renderYesNo(odds) {
+  const r = window.Oracle.yesNo(odds, state.chaos);
+  const yesCls = r.yes ? "yes" : "no";
+  const critCls = r.critical ? "crit" : "";
+  const lbl = { good: "Probably", even: "Unsure", bad: "Probably not" }[odds];
+  $("ynOut").innerHTML =
+    `<div class="answer ${yesCls} ${critCls}">${escapeHtml(r.answer)}</div>` +
+    `<div class="ratio">${escapeHtml(lbl)} · Ref ${r.ref} ${r.yes ? "≤" : ">"} threshold ${r.threshold} · chaos ${state.chaos}</div>`;
+}
+function renderEvent() {
+  const p = activePack();
+  if (!p.verbs || !p.adjectives || !p.nouns) {
+    $("evOut").innerHTML = `<span class="empty">Pack incomplete: missing verbs / adjectives / nouns.</span>`;
+    return;
+  }
+  const v = pick(p.verbs), a = pick(p.adjectives), n = pick(p.nouns);
+  $("evOut").innerHTML =
+    `<div class="event-line"><span class="verb">${escapeHtml(v)}</span> · <span class="adj">${escapeHtml(a)}</span> · <span class="noun">${escapeHtml(n)}</span></div>` +
+    `<div class="meta">Read as a phrase or interpret loosely.</div>`;
+}
+function renderReaction() {
+  const r = window.RPG.rollReaction();
+  $("npcOut").innerHTML =
+    `<div class="reaction-band ${r.key}">${escapeHtml(r.label)}</div>` +
+    `<div class="meta">${escapeHtml(r.note)} <span class="muted">(ref ${r.ref})</span></div>`;
+}
+function renderMotivation() {
+  const v = pick(window.RPG.VIRTUES);
+  const x = pick(window.RPG.VICES);
+  $("npcOut").innerHTML =
+    `<div class="npc-row">` +
+      `<div><div class="lbl">Virtue (wants)</div><div class="v">${escapeHtml(v)}</div></div>` +
+      `<div><div class="lbl">Vice (fears / fails)</div><div class="v">${escapeHtml(x)}</div></div>` +
+    `</div>` +
+    `<div class="meta">The pull and the flaw — both shape what they do under pressure.</div>`;
+}
+function renderCatalyst() {
+  const p = activePack();
+  if (!p.catalysts || !p.catalysts.length) {
+    $("sceneOut").innerHTML = `<span class="empty">Pack has no catalysts.</span>`;
+    return;
+  }
+  $("sceneOut").innerHTML =
+    `<div class="event-line">⚡ ${escapeHtml(pick(p.catalysts))}</div>` +
+    `<div class="meta">An inciting incident. Drop it on stage now.</div>`;
+}
+function renderSensory() {
+  const p = activePack();
+  const s = p.sensory || {};
+  if (!s.hear || !s.see || !s.feel || !s.smell) {
+    $("sceneOut").innerHTML = `<span class="empty">Pack has no sensory entries.</span>`;
+    return;
+  }
+  $("sceneOut").innerHTML =
+    `<div class="sensory-grid">` +
+      `<div><b>Hear</b>${escapeHtml(pick(s.hear))}</div>` +
+      `<div><b>See</b>${escapeHtml(pick(s.see))}</div>` +
+      `<div><b>Feel</b>${escapeHtml(pick(s.feel))}</div>` +
+      `<div><b>Smell / Taste</b>${escapeHtml(pick(s.smell))}</div>` +
+    `</div>`;
+}
+function renderNames() {
+  const p = activePack();
+  const names = window.RPG.rollNames(p, 3);
+  if (!names.length) {
+    $("genOut").innerHTML = `<span class="empty">Pack has no names.</span>`;
+    return;
+  }
+  $("genOut").innerHTML =
+    `<div class="gen-row">` +
+      `<div class="names">${names.map(n => `<span>${escapeHtml(n)}</span>`).join("")}</div>` +
+      `<div class="meta">Pick whichever fits the moment, or use them as siblings / kin.</div>` +
+    `</div>`;
+}
+function renderLocation() {
+  const p = activePack();
+  if (!p.locations || !p.locations.length) {
+    $("genOut").innerHTML = `<span class="empty">Pack has no locations.</span>`;
+    return;
+  }
+  $("genOut").innerHTML =
+    `<div class="gen-row">` +
+      `<div class="loc"><b>Location</b>${escapeHtml(pick(p.locations))}</div>` +
+    `</div>`;
+}
+
+// ---- handle ask ----
+function handleAsk(q) {
+  if (q === "yn-good")    return renderYesNo("good");
+  if (q === "yn-even")    return renderYesNo("even");
+  if (q === "yn-bad")     return renderYesNo("bad");
+  if (q === "event")      return renderEvent();
+  if (q === "reaction")   return renderReaction();
+  if (q === "motivation") return renderMotivation();
+  if (q === "catalyst")   return renderCatalyst();
+  if (q === "sensory")    return renderSensory();
+  if (q === "names")      return renderNames();
+  if (q === "location")   return renderLocation();
+}
+
+// ---- wire up ----
+document.querySelectorAll("[data-q]").forEach(b => {
+  b.addEventListener("click", () => handleAsk(b.getAttribute("data-q")));
+});
+$("genreSel").addEventListener("change", e => setGenre(e.target.value));
+$("chaos-down").addEventListener("click", () => { state.chaos = Math.max(1, state.chaos - 1); updateChaos(); save(); });
+$("chaos-up").addEventListener("click",   () => { state.chaos = Math.min(23, state.chaos + 1); updateChaos(); save(); });
+$("btnHelp").addEventListener("click", () => $("helpDialog").showModal());
+
+// init
+setGenre(state.genre);
+updateChaos();
+</script>
+</body>
+</html>

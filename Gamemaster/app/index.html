@@ -1,0 +1,1363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GameMaster's Apprentice — local deck</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root {
+  --bg: #1c1a17; --panel: #2a2722; --panel-2: #34302a;
+  --ink: #efe7d6; --ink-dim: #b8ad95;
+  --accent: #d9a441; --accent-2: #8a6f3a;
+  --red: #c64a3b; --green: #4a8a4f; --gold: #f1c14a; --blue: #5a7fb5;
+  --paper: #f3ecd8; --paper-ink: #1c1a17; --paper-line: #7a6a3a;
+  --hl: #ffd34a;
+  --air: #8ab8d9; --fire: #d97a3b; --earth: #7a6a3a; --water: #5a7fb5;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif; }
+button { font: inherit; }
+
+header {
+  padding: 0.6rem 1rem; background: var(--panel-2);
+  border-bottom: 1px solid var(--accent-2);
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+}
+header h1 { margin: 0; font-size: 1.3rem; color: var(--accent); letter-spacing: 0.05em; }
+header .sub { color: var(--ink-dim); font-size: 0.85rem; }
+header .spacer { flex: 1; }
+header button, header a {
+  background: var(--panel); color: var(--ink); border: 1px solid var(--accent-2);
+  padding: 0.4rem 0.85rem; border-radius: 4px;
+  font: inherit; font-size: 0.9rem; cursor: pointer; text-decoration: none;
+}
+header button:hover, header a:hover { background: var(--panel-2); border-color: var(--accent); }
+header button.primary { background: var(--accent-2); border-color: var(--accent); color: #fff; }
+header button.primary:hover { background: var(--accent); color: var(--bg); }
+header button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.tension {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  background: var(--panel); border: 1px solid var(--accent-2);
+  border-radius: 4px; padding: 0.25rem 0.55rem;
+}
+.tension .lbl { color: var(--ink-dim); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.tension .val { font-weight: bold; font-size: 1.05rem; min-width: 22px; text-align: center; line-height: 1; color: var(--accent); }
+.tension .val.high { color: var(--red); }
+.tension button { padding: 0.1rem 0.45rem; font-size: 0.95rem; line-height: 1;
+  background: var(--panel-2); color: var(--ink); border: 1px solid var(--accent-2);
+  border-radius: 3px; cursor: pointer; }
+.tension button:hover { border-color: var(--accent); }
+
+main { padding: 1rem; max-width: 1400px; margin: 0 auto;
+  display: flex; flex-direction: column; gap: 1rem; }
+
+.empty-banner {
+  background: var(--panel); border: 1px dashed var(--accent);
+  color: var(--ink-dim); padding: 1rem 1.2rem; border-radius: 8px;
+  font-size: 0.95rem; line-height: 1.5;
+}
+.empty-banner b { color: var(--accent); }
+.empty-banner code { background: var(--panel-2); padding: 1px 6px;
+  border-radius: 3px; color: var(--ink); }
+
+.banner {
+  background: var(--paper); color: var(--paper-ink);
+  border: 2px solid var(--accent); border-radius: 8px;
+  padding: 0.8rem 1.2rem; text-align: center;
+  display: none;
+}
+.banner.show { display: block; }
+.banner .label { color: #7a5a2a; font-size: 0.7rem;
+  text-transform: uppercase; letter-spacing: 0.08em; }
+.banner .answer { font-size: 1.6rem; font-weight: 700; margin: 4px 0; }
+.banner .extra { color: #6a5a3a; font-size: 0.85rem; font-style: italic; }
+.banner.fresh { animation: flash 1.4s ease-out; }
+@keyframes flash {
+  0%   { transform: scale(0.97); box-shadow: 0 0 0 0 rgba(241,193,74,0); background: #fff5c8; }
+  35%  { transform: scale(1.02); box-shadow: 0 0 22px rgba(241,193,74,0.85); background: #fff5c8; }
+  100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(241,193,74,0); background: var(--paper); }
+}
+
+.grid {
+  display: grid; gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (min-width: 900px)  { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1200px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+.cell {
+  background: var(--panel); border: 1px solid var(--accent-2);
+  border-radius: 6px; padding: 0.7rem 0.85rem;
+  display: flex; flex-direction: column; gap: 0.45rem;
+  min-height: 130px;
+}
+.cell h3 { margin: 0; font-size: 0.78rem; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--accent);
+  border-bottom: 1px solid var(--accent-2); padding-bottom: 4px;
+  display: flex; align-items: center; gap: 6px; }
+.cell h3 button { margin-left: auto; background: var(--panel-2);
+  color: var(--ink); border: 1px solid var(--accent-2);
+  padding: 2px 9px; font-size: 0.72rem; border-radius: 3px; cursor: pointer; }
+.cell h3 button:hover { border-color: var(--accent); }
+.cell h3 button:disabled { opacity: 0.4; cursor: not-allowed; }
+.cell .body { font-size: 0.95rem; line-height: 1.45; flex: 1;
+  display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.cell .body .empty { color: var(--ink-dim); font-style: italic; font-size: 0.85rem; }
+.cell .meta { color: var(--ink-dim); font-size: 0.74rem; }
+
+/* Difficulty */
+.cell.difficulty .big { font-size: 2.4rem; font-weight: 800; color: var(--accent);
+  text-align: center; line-height: 1; }
+.cell.difficulty .scale { display: flex; gap: 2px; justify-content: center; margin-top: 4px; }
+.cell.difficulty .scale span { width: 14px; height: 6px; background: var(--panel-2); border-radius: 1px; }
+.cell.difficulty .scale span.on { background: var(--accent); }
+
+/* Odds */
+.cell.odds .row { display: grid; grid-template-columns: 60px 1fr;
+  gap: 6px; align-items: center; }
+.cell.odds .row .tier { font-size: 0.7rem; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--ink-dim); text-align: right; }
+.cell.odds .row .ans {
+  background: var(--panel-2); border-radius: 3px;
+  padding: 4px 8px; font-weight: 700; text-align: center;
+  border: 1px solid transparent;
+}
+.cell.odds .row .ans.yes      { background: #1c3a1f; color: #6dd47a; }
+.cell.odds .row .ans.YES      { background: #2c5a2f; color: #aaffaa; text-shadow: 0 0 6px currentColor; }
+.cell.odds .row .ans.no       { background: #3a1c1c; color: #ef8888; }
+.cell.odds .row .ans.NO       { background: #5a2c2c; color: #ffaaaa; text-shadow: 0 0 6px currentColor; }
+.cell.odds .row.active .ans   { border-color: var(--hl); }
+.cell.odds .actions { display: flex; gap: 4px; margin-top: 4px; justify-content: center; }
+.cell.odds .actions button { padding: 2px 8px; font-size: 0.72rem; flex: 1;
+  background: var(--panel-2); color: var(--ink); border: 1px solid var(--accent-2);
+  border-radius: 3px; cursor: pointer; }
+
+/* Dice */
+.cell.dice .grid-d {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px;
+}
+.cell.dice .die {
+  background: var(--panel-2); border: 1px solid var(--accent-2);
+  border-radius: 4px; padding: 4px 0; text-align: center;
+}
+.cell.dice .die .lbl { font-size: 0.62rem; color: var(--ink-dim); }
+.cell.dice .die .val { font-weight: 700; font-size: 1rem; color: var(--ink); }
+.cell.dice .die.percentile { grid-column: span 2; }
+.cell.dice .die.percentile .val { font-size: 0.85rem; }
+
+/* Rune */
+.cell.rune .name { font-size: 1.4rem; font-weight: 700;
+  color: var(--gold); text-align: center; letter-spacing: 0.04em; }
+.cell.rune .gloss { color: var(--ink-dim); font-size: 0.78rem;
+  font-style: italic; text-align: center; }
+
+/* Element */
+.cell.element .badge {
+  display: inline-block; padding: 8px 14px; border-radius: 4px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+  align-self: center;
+}
+.cell.element .badge.Earth { background: var(--earth); color: #fff5c8; }
+.cell.element .badge.Fire  { background: var(--fire);  color: #fff8e0; }
+.cell.element .badge.Air   { background: var(--air);   color: #1c1a17; }
+.cell.element .badge.Water { background: var(--water); color: #fff5c8; }
+
+/* Event */
+.cell.event .phrase {
+  font-size: 1rem; text-align: center; line-height: 1.6;
+}
+.cell.event .verb { color: var(--red);    font-weight: 700; }
+.cell.event .adj  { color: var(--accent); font-weight: 700; }
+.cell.event .noun { color: var(--blue);   font-weight: 700; }
+
+/* Sensory */
+.cell.sensory .row { display: grid; grid-template-columns: 50px 1fr; gap: 6px; align-items: baseline; }
+.cell.sensory .row .lbl { font-size: 0.7rem; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--accent); text-align: right; }
+.cell.sensory .row .v { font-size: 0.86rem; }
+
+/* Tags */
+.cell.tags .tag-row { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+.cell.tags .tag {
+  background: var(--panel-2); border: 1px solid var(--accent-2);
+  border-radius: 3px; padding: 4px 10px; font-size: 0.85rem; color: var(--gold);
+}
+
+/* Scatter */
+.cell.scatter .grid-s {
+  display: grid; grid-template-columns: repeat(3, 32px); gap: 2px;
+  justify-content: center;
+}
+.cell.scatter .grid-s .dot {
+  width: 32px; height: 32px; border-radius: 4px;
+  background: var(--panel-2); border: 1px solid var(--accent-2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-dim); font-size: 0.92rem;
+}
+.cell.scatter .grid-s .dot.center { background: var(--panel); }
+.cell.scatter .grid-s .dot.on { background: var(--accent); color: #1c1a17; font-weight: 700; }
+.cell.scatter .hit-row {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 0.78rem; color: var(--ink-dim);
+}
+.cell.scatter .hit { color: var(--green); font-weight: 700; }
+.cell.scatter .miss { color: var(--red); font-weight: 700; }
+
+/* Belongings */
+.cell.belongings .cat { font-size: 0.78rem; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--accent); }
+.cell.belongings .items { font-size: 0.92rem; }
+.cell.belongings .items span { display: inline-block; margin: 2px 4px 2px 0;
+  background: var(--panel-2); border: 1px solid var(--accent-2);
+  border-radius: 3px; padding: 2px 8px; }
+
+/* Names */
+.cell.names .row { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+.cell.names .row span { background: var(--panel-2); border: 1px solid var(--accent-2);
+  border-radius: 3px; padding: 4px 12px; font-size: 0.95rem; }
+
+/* Catalyst */
+.cell.catalyst .text { font-size: 0.92rem; line-height: 1.5; }
+
+/* Location */
+.cell.location .text { font-size: 0.92rem; line-height: 1.5; }
+
+/* Virtue & Vice */
+.cell.vv { grid-column: span 1; }
+.cell.vv .vrow { display: grid; grid-template-columns: 60px 1fr;
+  gap: 6px; align-items: center; }
+.cell.vv .vrow .lbl { font-size: 0.7rem; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--ink-dim); text-align: right; }
+.cell.vv .vrow .v { font-weight: 700; font-size: 1rem; }
+.cell.vv .vrow.virtue .v { color: var(--green); }
+.cell.vv .vrow.vice .v { color: var(--red); }
+
+/* Card identifier */
+.card-id {
+  display: inline-block; background: var(--panel-2); color: var(--accent);
+  padding: 4px 10px; border-radius: 4px; font-size: 0.78rem;
+  border: 1px solid var(--accent-2); letter-spacing: 0.06em;
+}
+
+@keyframes cell-flash {
+  0%   { box-shadow: 0 0 0 0 rgba(217, 164, 65, 0); border-color: var(--accent); }
+  35%  { box-shadow: 0 0 18px 2px rgba(217, 164, 65, 0.8); border-color: var(--accent); }
+  100% { box-shadow: 0 0 0 0 rgba(217, 164, 65, 0); border-color: var(--accent-2); }
+}
+.cell.flash { animation: cell-flash 0.7s ease-out; }
+
+/* Lists dialog (Threads & Characters) */
+dialog.lists { max-width: 760px; }
+dialog.lists .lists-grid { display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1rem; margin-top: 0.6rem; }
+@media (max-width: 600px) { dialog.lists .lists-grid { grid-template-columns: 1fr; } }
+dialog.lists .list-col h3 { margin: 0 0 0.4rem 0; font-size: 0.95rem;
+  border-bottom: 1px solid var(--accent-2); padding-bottom: 0.25rem;
+  display: flex; justify-content: space-between; align-items: baseline; }
+dialog.lists .list-col h3 .count { color: var(--ink-dim); font-size: 0.75rem;
+  font-weight: normal; }
+dialog.lists .list-item { background: var(--panel-2); border-radius: 4px;
+  padding: 0.5rem 0.6rem; margin-bottom: 0.35rem;
+  border: 1px solid transparent; }
+dialog.lists .list-item.archived { opacity: 0.5; }
+dialog.lists .list-item .name { font-weight: bold; color: var(--ink); }
+dialog.lists .list-item .notes { font-size: 0.82rem; color: var(--ink-dim);
+  margin-top: 0.15rem; line-height: 1.3; white-space: pre-wrap; }
+dialog.lists .list-item .actions { display: flex; gap: 0.3rem; margin-top: 0.4rem; }
+dialog.lists .list-item .actions button { padding: 0.15rem 0.5rem; font-size: 0.72rem;
+  background: var(--panel); color: var(--ink-dim);
+  border: 1px solid var(--accent-2); border-radius: 3px; cursor: pointer; }
+dialog.lists .list-item .actions button:hover { color: var(--ink); border-color: var(--accent); }
+dialog.lists .list-item .actions button.delete:hover { color: var(--red); border-color: var(--red); }
+dialog.lists .list-item .edit-form { display: flex; flex-direction: column; gap: 0.3rem; }
+dialog.lists .list-item .edit-form input,
+dialog.lists .list-item .edit-form textarea {
+  width: 100%; background: var(--bg); color: var(--ink);
+  border: 1px solid var(--accent-2); border-radius: 3px;
+  padding: 0.3rem; font: inherit; font-size: 0.85rem; }
+dialog.lists .list-item .edit-form textarea { min-height: 50px; resize: vertical; }
+dialog.lists .add-form { display: flex; gap: 0.3rem; margin-top: 0.5rem; }
+dialog.lists .add-form input { flex: 1; background: var(--panel-2); color: var(--ink);
+  border: 1px solid var(--accent-2); border-radius: 3px; padding: 0.35rem 0.5rem;
+  font: inherit; font-size: 0.85rem; }
+dialog.lists .add-form button { background: var(--accent-2); color: #fff;
+  border: 1px solid var(--accent); border-radius: 3px; padding: 0.35rem 0.7rem;
+  cursor: pointer; font: inherit; font-size: 0.85rem; }
+dialog.lists .empty-msg { color: var(--ink-dim); font-style: italic;
+  font-size: 0.82rem; padding: 0.4rem 0; }
+
+/* NPC popup */
+dialog.npc { max-width: 480px; }
+dialog.npc .npc-card { display: grid; gap: 0.5rem; margin-top: 0.6rem; }
+dialog.npc .npc-row { display: grid; grid-template-columns: 80px 1fr;
+  gap: 0.5rem; align-items: baseline; }
+dialog.npc .npc-row .lbl { font-size: 0.7rem; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--ink-dim); text-align: right; }
+dialog.npc .npc-row .v { font-size: 0.95rem; }
+dialog.npc .npc-row .v.name { font-weight: bold; font-size: 1.1rem; color: var(--accent); }
+dialog.npc .npc-row .v.virtue { color: var(--green); font-weight: bold; }
+dialog.npc .npc-row .v.vice { color: var(--red); font-weight: bold; }
+dialog.npc .npc-row .v.reaction { font-weight: bold; }
+dialog.npc .npc-row .v.reaction.hostile  { color: #ff8a8a; }
+dialog.npc .npc-row .v.reaction.wary     { color: #f1c14a; }
+dialog.npc .npc-row .v.reaction.neutral  { color: var(--ink); }
+dialog.npc .npc-row .v.reaction.friendly { color: #6dd47a; }
+dialog.npc .npc-row .v.reaction.helpful  { color: #6ddccc; }
+dialog.npc .npc-row .reaction-note { color: var(--ink-dim); font-style: italic; font-size: 0.8rem; }
+dialog.npc .npc-actions { display: flex; gap: 0.5rem; margin-top: 0.7rem;
+  padding-top: 0.5rem; border-top: 1px solid var(--accent-2); align-items: center; }
+dialog.npc .npc-actions input { flex: 1; background: var(--panel-2); color: var(--ink);
+  border: 1px solid var(--accent-2); border-radius: 3px; padding: 0.35rem 0.5rem;
+  font: inherit; font-size: 0.85rem; }
+dialog.npc .npc-actions button { background: var(--panel); color: var(--ink);
+  border: 1px solid var(--accent-2); border-radius: 3px; padding: 0.35rem 0.7rem;
+  cursor: pointer; font: inherit; font-size: 0.85rem; }
+dialog.npc .npc-actions button.primary { background: var(--accent-2); color: #fff;
+  border-color: var(--accent); }
+dialog.npc .saved-msg { color: var(--green); font-size: 0.85rem; padding: 0.3rem 0; }
+
+.genre-pick {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--panel); border: 1px solid var(--accent-2);
+  border-radius: 4px; padding: 2px 6px;
+}
+.genre-pick .lbl { color: var(--ink-dim); font-size: 0.72rem;
+  text-transform: uppercase; letter-spacing: 0.06em; }
+.genre-pick select {
+  background: var(--panel-2); color: var(--ink);
+  border: 1px solid var(--accent-2); border-radius: 3px;
+  padding: 3px 8px; font: inherit; font-size: 0.85rem; cursor: pointer;
+}
+.genre-pick select:hover { border-color: var(--accent); }
+
+dialog {
+  background: var(--panel); color: var(--ink);
+  border: 1px solid var(--accent-2); border-radius: 10px;
+  padding: 18px 22px; max-width: 760px; width: 90vw;
+  max-height: 85vh; overflow-y: auto;
+}
+dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
+dialog h2 { margin: 0 0 8px; color: var(--accent); }
+dialog h3 { margin: 14px 0 4px; color: var(--accent); font-size: 1rem; }
+dialog p, dialog li { font-size: 0.92rem; line-height: 1.5; }
+dialog code { background: var(--panel-2); padding: 1px 6px; border-radius: 3px; }
+dialog .x {
+  position: sticky; float: right; top: 0;
+  background: var(--panel-2); color: var(--ink);
+  border: 1px solid var(--accent-2); border-radius: 4px;
+  padding: 2px 10px; cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>GameMaster's Apprentice</h1>
+  <span class="sub">— local deck app · all 14 randomizers</span>
+  <span class="spacer"></span>
+  <span class="genre-pick" title="Genre pack. When set, Random Event, Sensory, Belongings, Names, and Location are pulled from the chosen pack instead of the card's printed values.">
+    <span class="lbl">Genre</span>
+    <select id="genreSel">
+      <option value="card">Card (printed)</option>
+      <option value="fantasy">Basic Fantasy (LOTR / D&amp;D)</option>
+      <option value="weird-horror">Weird Horror</option>
+      <option value="scifi">Science Fiction</option>
+      <option value="steampunk">Steampunk</option>
+      <option value="cyberpunk">Cyberpunk</option>
+      <option value="postapoc">Post-Apocalyptic</option>
+    </select>
+  </span>
+  <span class="tension" title="Tension counter. Each oracle question increments it; at the threshold a Random Event auto-fires and tension resets.">
+    <span class="lbl">Tension</span>
+    <button id="tDown" type="button">−</button>
+    <span class="val" id="tVal">0</span>
+    <button id="tUp" type="button">+</button>
+    <span class="lbl" style="margin-left: 4px;">/ <span id="tThr">11</span></span>
+  </span>
+  <button id="btnLists" type="button" title="Threads &amp; Characters — your campaign's persistent narrative state.">Lists</button>
+  <button id="btnQuickNpc" type="button" title="Generate a complete NPC from the current card + active genre pack. Save it to Characters.">Quick NPC</button>
+  <button id="btnDraw" class="primary" type="button">Draw card</button>
+  <button id="btnHelp" type="button">Help</button>
+  <button id="btnReset" type="button">Reset</button>
+</header>
+
+<main>
+
+  <div class="empty-banner" id="emptyBanner" style="display:none">
+    <b>0 cards loaded.</b> The deck file <code>cards.js</code> is empty.
+    Populate it from your PnP — see <a href="cards-howto.md" style="color:var(--accent)">cards-howto.md</a>
+    for the schema and the two-step <code>pdftotext + extract.py</code> workflow,
+    or hand-edit <code>cards.js</code> directly.
+    All 14 randomizers below stay disabled until at least one card is loaded.
+  </div>
+
+  <div class="banner" id="banner">
+    <div class="label" id="banLabel"></div>
+    <div class="answer" id="banAns"></div>
+    <div class="extra" id="banExtra"></div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+    <span class="card-id" id="cardId">No card</span>
+    <span class="meta" id="deckSize" style="color:var(--ink-dim);font-size:0.85rem;"></span>
+  </div>
+
+  <div class="grid" id="grid">
+
+    <div class="cell difficulty">
+      <h3>1 · Difficulty <button data-q="difficulty">draw</button></h3>
+      <div class="body">
+        <div class="big" id="diffVal">—</div>
+        <div class="scale" id="diffScale"></div>
+        <div class="meta">1–10 bell curve. Most lock-pick rolls, NPC reactions, anything "average."</div>
+      </div>
+    </div>
+
+    <div class="cell odds">
+      <h3>2 · Likely Odds <button data-q="odds-good">good</button></h3>
+      <div class="body">
+        <div class="row" id="oddsBad"><span class="tier">Bad</span><span class="ans" id="oddsBadV">—</span></div>
+        <div class="row" id="oddsEven"><span class="tier">Even</span><span class="ans" id="oddsEvenV">—</span></div>
+        <div class="row" id="oddsGood"><span class="tier">Good</span><span class="ans" id="oddsGoodV">—</span></div>
+        <div class="actions">
+          <button data-q="odds-bad">Bad</button>
+          <button data-q="odds-even">Even</button>
+          <button data-q="odds-good">Good</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cell dice">
+      <h3>3 · Dice <button data-q="dice">roll</button></h3>
+      <div class="body">
+        <div class="grid-d">
+          <div class="die"><div class="lbl">d4</div><div class="val" id="d4">—</div></div>
+          <div class="die"><div class="lbl">d6</div><div class="val" id="d6">—</div></div>
+          <div class="die"><div class="lbl">d8</div><div class="val" id="d8">—</div></div>
+          <div class="die"><div class="lbl">d10</div><div class="val" id="d10">—</div></div>
+          <div class="die"><div class="lbl">d12</div><div class="val" id="d12">—</div></div>
+          <div class="die"><div class="lbl">d20</div><div class="val" id="d20">—</div></div>
+          <div class="die percentile"><div class="lbl">d100 (tens · units)</div><div class="val" id="d100">— · —</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cell rune">
+      <h3>4 · Norse Rune <button data-q="rune">draw</button></h3>
+      <div class="body">
+        <div class="name" id="runeName">—</div>
+        <div class="gloss" id="runeGloss">Tarot-style symbol prompt.</div>
+      </div>
+    </div>
+
+    <div class="cell element">
+      <h3>5 · Element <button data-q="element">draw</button></h3>
+      <div class="body" id="elemBody">
+        <div class="meta" style="text-align:center;color:var(--ink-dim);">—</div>
+      </div>
+    </div>
+
+    <div class="cell event">
+      <h3>6 · Random Event <button data-q="event">draw</button></h3>
+      <div class="body">
+        <div class="phrase">
+          <span class="verb" id="evVerb">—</span> ·
+          <span class="adj"  id="evAdj">—</span> ·
+          <span class="noun" id="evNoun">—</span>
+        </div>
+        <div class="meta">Verb + Adjective + Noun. Read as a phrase.</div>
+      </div>
+    </div>
+
+    <div class="cell sensory">
+      <h3>7 · Sensory <button data-q="sensory">draw</button></h3>
+      <div class="body">
+        <div class="row"><span class="lbl">Hear</span><span class="v" id="sHear">—</span></div>
+        <div class="row"><span class="lbl">See</span><span class="v" id="sSee">—</span></div>
+        <div class="row"><span class="lbl">Feel</span><span class="v" id="sFeel">—</span></div>
+        <div class="row"><span class="lbl">Smell</span><span class="v" id="sSmell">—</span></div>
+      </div>
+    </div>
+
+    <div class="cell tags">
+      <h3>8 · Tag Symbols <button data-q="tags">draw</button></h3>
+      <div class="body">
+        <div class="tag-row" id="tagRow"><span class="meta">—</span></div>
+        <div class="meta">3 of 10 — assign meanings per scene.</div>
+      </div>
+    </div>
+
+    <div class="cell scatter">
+      <h3>9 · Scatter Die <button data-q="scatter">draw</button></h3>
+      <div class="body">
+        <div class="grid-s" id="scatGrid"></div>
+        <div class="hit-row"><span id="scatHit">—</span></div>
+      </div>
+    </div>
+
+    <div class="cell belongings">
+      <h3>10 · Belongings <button data-q="belongings">draw</button></h3>
+      <div class="body">
+        <div class="cat" id="belCat">—</div>
+        <div class="items" id="belItems"><span class="meta">—</span></div>
+      </div>
+    </div>
+
+    <div class="cell names">
+      <h3>11 · Names <button data-q="names">draw</button></h3>
+      <div class="body">
+        <div class="row" id="nameRow"><span class="meta">—</span></div>
+      </div>
+    </div>
+
+    <div class="cell catalyst">
+      <h3>12 · Catalyst <button data-q="catalyst">draw</button></h3>
+      <div class="body">
+        <div class="text" id="catText"><span class="meta">—</span></div>
+      </div>
+    </div>
+
+    <div class="cell location">
+      <h3>13 · Location <button data-q="location">draw</button></h3>
+      <div class="body">
+        <div class="text" id="locText"><span class="meta">—</span></div>
+      </div>
+    </div>
+
+    <div class="cell vv">
+      <h3>14 · Virtue &amp; Vice <button data-q="vv">draw</button></h3>
+      <div class="body">
+        <div class="vrow virtue"><span class="lbl">Virtue</span><span class="v" id="virtVal">—</span></div>
+        <div class="vrow vice">  <span class="lbl">Vice</span>  <span class="v" id="viceVal">—</span></div>
+        <div class="meta">What they want · what they fear / fail at.</div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<dialog id="helpDialog">
+<button class="x" onclick="document.getElementById('helpDialog').close()">close</button>
+<h2>The GameMaster's Apprentice — local deck app</h2>
+<p>This app implements the 14 randomizer fields of a GMA card deck and runs them off your local <code>cards.js</code> file. The card content itself is yours — populate the file from your PnP using <code>app/extract/extract.py</code> (see <code>cards-howto.md</code>), or hand-edit it.</p>
+
+<h3>Two ways to ask the oracle</h3>
+<ul>
+  <li><b>Draw a card</b> (top right): one card flips and every randomizer field updates at once. Read whichever field answers your current question.</li>
+  <li><b>Per-field draw</b> (the small "draw" button in each cell): flips just that randomizer. The rest of the card view updates too — different randomizers on the same card aren't independent.</li>
+</ul>
+
+<h3>The 14 randomizers</h3>
+<ol>
+  <li><b>Difficulty</b> — 1–10 bell curve. Lock picks, reactions, "how strong / friendly / heavy."</li>
+  <li><b>Likely Odds</b> — answer to a yes/no question, in three odds tiers (Bad 25%, Even 50%, Good 75%). YES! / NO! are emphatic criticals, printed on certain cards.</li>
+  <li><b>Dice</b> — d4, d6, d8, d10, d12, d20, d00/d10 percentile. Pre-rolled values on each card.</li>
+  <li><b>Norse Rune</b> — one of 24 Elder Futhark, Tarot-style for symbolic interpretation.</li>
+  <li><b>Element</b> — Earth / Fire / Air / Water. Tone modifier on other randomizers.</li>
+  <li><b>Random Event</b> — Verb + Adjective + Noun phrase. Decide what it means in scene.</li>
+  <li><b>Sensory</b> — Hear / See / Feel / Smell-Taste. Atmosphere prompts.</li>
+  <li><b>Tag Symbols</b> — 3 of 10 icons. Map to your own table per scene (NPC types / room features / loot / etc.).</li>
+  <li><b>Scatter Die</b> — direction (N/NE/E/SE/S/SW/W/NW) + hit/miss. Spatial randomizer.</li>
+  <li><b>Belongings</b> — category + 3 examples. NPC pockets / loot.</li>
+  <li><b>Names</b> — 3 names, often male / female / neutral.</li>
+  <li><b>Catalyst</b> — a one-line story incident to start a scene.</li>
+  <li><b>Location</b> — adventure setting prompt.</li>
+  <li><b>Virtue &amp; Vice</b> — NPC motivation pair.</li>
+</ol>
+
+<h3>Tension</h3>
+<p>Each time you draw a card or rate a question, Tension goes up by 1. When it hits the threshold (default 11), a Random Event auto-fires and Tension resets to 0. That's the GMA "every-eleven-questions surprise" loop. Adjust manually with the <code>+ / −</code> buttons — raise it after a frantic scene, lower it after a quiet one.</p>
+
+<h3>Threads &amp; Characters (Lists)</h3>
+<p>Cards have no memory of previous state — but the app does. Click <b>Lists</b> to manage two persistent rosters: <b>Threads</b> (active plot threads) and <b>Characters</b> (NPCs you've met). When Tension auto-fires a Random Event, the app picks a random active entry from these lists and surfaces it in the banner — so the surprise anchors to story you've already established instead of a brand-new stranger every time.</p>
+
+<h3>Quick NPC</h3>
+<p>Click <b>Quick NPC</b> to spin a complete NPC from the current deck + active genre pack: name, reaction (1-of-5: Hostile / Wary / Neutral / Friendly / Helpful), virtue, vice, belongings, element. Reroll until one feels right; then <b>Save to Characters</b> to add to your roster.</p>
+
+<h3>State</h3>
+<p>Tension, last-drawn card, genre, threads, and characters all save to <code>localStorage</code> under <code>oracle.gma.v2</code>. Older <code>oracle.gma.v1</code> data is migrated automatically on first load.</p>
+
+<h3>Mechanics credit</h3>
+<p>The GameMaster's Apprentice is by Nathan Rockwood / Larcenous Designs. This app is a local front-end for a deck you already own; it ships empty and you fill it in.</p>
+</dialog>
+
+<dialog id="listsDialog" class="lists">
+<button class="x" onclick="document.getElementById('listsDialog').close()">close</button>
+<h2>Threads &amp; Characters</h2>
+<p style="color:var(--ink-dim);font-size:0.86rem;margin:0.3rem 0 0.6rem;">
+  Cards have no memory of previous state. The app does. Active entries here are
+  picked when Tension auto-fires a Random Event, anchoring the surprise to
+  story you've already established.
+</p>
+<div class="lists-grid">
+  <div class="list-col">
+    <h3>Threads <span class="count" id="threadsCount"></span></h3>
+    <div id="threadsItems"></div>
+    <form id="threadsAddForm" class="add-form">
+      <input type="text" id="threadsAddInput" placeholder="Add a plot thread…" maxlength="80" required>
+      <button type="submit">Add</button>
+    </form>
+  </div>
+  <div class="list-col">
+    <h3>Characters <span class="count" id="charsCount"></span></h3>
+    <div id="charsItems"></div>
+    <form id="charsAddForm" class="add-form">
+      <input type="text" id="charsAddInput" placeholder="Add an NPC…" maxlength="80" required>
+      <button type="submit">Add</button>
+    </form>
+  </div>
+</div>
+</dialog>
+
+<dialog id="npcDialog" class="npc">
+<button class="x" onclick="document.getElementById('npcDialog').close()">close</button>
+<h2>Quick NPC</h2>
+<div class="npc-card" id="npcContent"></div>
+<div class="npc-actions">
+  <input type="text" id="npcSaveName" placeholder="Save as…" maxlength="80">
+  <button id="npcReroll" type="button">Reroll</button>
+  <button id="npcSave" type="button" class="primary">Save to Characters</button>
+</div>
+<div class="saved-msg" id="npcSavedMsg" style="display:none">Saved to Characters.</div>
+</dialog>
+
+<script src="packs/fantasy.js"></script>
+<script src="packs/postapoc.js"></script>
+<script src="packs/cyberpunk.js"></script>
+<script src="packs/weird-horror.js"></script>
+<script src="packs/steampunk.js"></script>
+<script src="packs/scifi.js"></script>
+<script src="lists.js"></script>
+<script src="cards.js"></script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const escapeHtml = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
+  }[c]));
+  const rand = (n) => Math.floor(Math.random() * n);
+  const pick = (a) => a[rand(a.length)];
+
+  // ---- state ----
+  const NS = "oracle.gma.v2";
+  const NS_OLD = "oracle.gma.v1";
+  const defaultState = () => ({
+    version: 2,
+    tension: 0, threshold: 11, lastCardIdx: null, genre: "card",
+    threads: [], characters: [],
+  });
+  const loadState = () => {
+    try {
+      // Prefer v2; if absent, migrate from v1 (preserves tension/threshold/lastCardIdx/genre)
+      const raw = localStorage.getItem(NS) || localStorage.getItem(NS_OLD) || "{}";
+      return Object.assign(defaultState(), JSON.parse(raw));
+    } catch (_) { return defaultState(); }
+  };
+  const state = loadState();
+  const saveState = () => { try { localStorage.setItem(NS, JSON.stringify(state)); } catch (_) {} };
+
+  // pickN: choose N distinct items from arr (used by deck fill + genre overlay)
+  function pickN(arr, n) {
+    if (!arr || !arr.length) return [];
+    const pool = arr.slice();
+    const out = [];
+    while (out.length < n && pool.length) {
+      out.push(pool.splice(rand(pool.length), 1)[0]);
+    }
+    return out;
+  }
+
+  // ---- deck ----
+  // Fill any icon-only fields (dice / element / rune / tags / scatter) at
+  // load time so every panel always shows a value. Stable for the session.
+  // Spread to avoid mutating window.GMA_CARDS.
+  const ELEMENTS = ["Earth", "Fire", "Air", "Water"];
+  const SCATTER_DIRS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  // 24 Elder Futhark rune names (public knowledge):
+  const RUNES = [
+    "Fehu", "Uruz", "Thurisaz", "Ansuz", "Raidho", "Kenaz",
+    "Gebo", "Wunjo", "Hagalaz", "Naudhiz", "Isa", "Jera",
+    "Eihwaz", "Perthro", "Algiz", "Sowilo", "Tiwaz", "Berkano",
+    "Ehwaz", "Mannaz", "Laguz", "Ingwaz", "Dagaz", "Othala",
+  ];
+  // 10 GMA tag symbols (icon names — assign meanings per scene):
+  const TAG_SYMBOLS = [
+    "Tower", "Crown", "Heart", "Skull", "Sun",
+    "Moon", "Sword", "Shield", "Target", "Wand",
+  ];
+
+  const DECK = (window.GMA_CARDS || []).map((c) => {
+    const d = c.dice || {};
+    return Object.assign({}, c, {
+      element: ELEMENTS.includes(c.element) ? c.element : pick(ELEMENTS),
+      rune:    c.rune || pick(RUNES),
+      tags:    (c.tags && c.tags.length === 3) ? c.tags : pickN(TAG_SYMBOLS, 3),
+      scatter: (c.scatter && c.scatter.dir)
+        ? c.scatter
+        : { dir: pick(SCATTER_DIRS), hit: rand(2) === 0 },
+      dice: {
+        d4:        d.d4        != null ? d.d4        : 1 + rand(4),
+        d6:        d.d6        != null ? d.d6        : 1 + rand(6),
+        d8:        d.d8        != null ? d.d8        : 1 + rand(8),
+        d10:       d.d10       != null ? d.d10       : rand(10),
+        d12:       d.d12       != null ? d.d12       : 1 + rand(12),
+        d20:       d.d20       != null ? d.d20       : 1 + rand(20),
+        d100tens:  d.d100tens  != null ? d.d100tens  : rand(10),
+        d100units: d.d100units != null ? d.d100units : rand(10),
+      },
+    });
+  });
+  const hasDeck = () => DECK.length > 0;
+  let lastCard = null;
+
+  // ---- genre pack overlay ----
+  // When a genre is selected, override 5 fields (event, sensory, belongings,
+  // names, location) with picks from the active pack. Other fields (catalyst,
+  // virtue, vice, dice, etc.) remain from the card.
+  function applyGenre(card) {
+    if (!card) return card;
+    const key = state.genre;
+    if (!key || key === "card") return card;
+    const packs = window.GENRE_PACKS || {};
+    const p = packs[key];
+    if (!p) return card;
+
+    const allNames = [].concat(
+      (p.names && p.names.male)    || [],
+      (p.names && p.names.female)  || [],
+      (p.names && p.names.neutral) || []
+    );
+    const sens = p.sensory || {};
+    const bel  = (p.belongings && p.belongings.length) ? pick(p.belongings) : null;
+
+    return Object.assign({}, card, {
+      event: {
+        verb:      p.verbs      && p.verbs.length      ? pick(p.verbs)      : (card.event && card.event.verb),
+        adjective: p.adjectives && p.adjectives.length ? pick(p.adjectives) : (card.event && card.event.adjective),
+        noun:      p.nouns      && p.nouns.length      ? pick(p.nouns)      : (card.event && card.event.noun),
+      },
+      sensory: {
+        hear:  (sens.hear  && sens.hear.length)  ? pick(sens.hear)  : (card.sensory && card.sensory.hear),
+        see:   (sens.see   && sens.see.length)   ? pick(sens.see)   : (card.sensory && card.sensory.see),
+        feel:  (sens.feel  && sens.feel.length)  ? pick(sens.feel)  : (card.sensory && card.sensory.feel),
+        smell: (sens.smell && sens.smell.length) ? pick(sens.smell) : (card.sensory && card.sensory.smell),
+      },
+      belongings: bel ? { category: bel.category, items: bel.items.slice() } : card.belongings,
+      names: allNames.length >= 3 ? pickN(allNames, 3) : (card.names || []),
+      location: (p.locations && p.locations.length) ? pick(p.locations) : card.location,
+    });
+  }
+
+  function drawCard() {
+    if (!hasDeck()) return null;
+    const idx = rand(DECK.length);
+    state.lastCardIdx = idx;
+    lastCard = applyGenre(DECK[idx]);
+    saveState();
+    return lastCard;
+  }
+
+  // ---- 8 scatter directions in a 3x3 grid layout ----
+  // grid positions (top-left=0..bottom-right=8); skip 4 (center)
+  const SCATTER_GRID_POS = { NW:0, N:1, NE:2, W:3, E:5, SW:6, S:7, SE:8 };
+
+  // ---- tension ----
+  function tensionAnchor() {
+    // When Tension auto-fires, pick a random active Character or Thread (if any)
+    // to anchor the event in story we've established.
+    const candidates = [].concat(
+      state.characters.filter((e) => !e.archived).map((e) => ({ kind: "Character", entry: e })),
+      state.threads.filter((e) => !e.archived).map((e) => ({ kind: "Thread", entry: e })),
+    );
+    return candidates.length ? candidates[rand(candidates.length)] : null;
+  }
+  function bumpTension() {
+    state.tension += 1;
+    if (state.tension >= state.threshold) {
+      state.tension = 0;
+      saveState();
+      updateTension();
+      if (hasDeck()) {
+        const card = drawCard();
+        renderAll(card);
+        const anchor = tensionAnchor();
+        const eventPhrase = card.event ? phraseEvent(card.event) : "(no event on card)";
+        const anchorLine = anchor
+          ? ` <span style="color:var(--accent);font-style:italic;">· ${escapeHtml(anchor.kind)}: <b>${escapeHtml(anchor.entry.name)}</b></span>`
+          : "";
+        showBanner("Tension event!", eventPhrase + anchorLine,
+          anchor
+            ? `Tension hit threshold. Anchor it on this active ${anchor.kind.toLowerCase()}.`
+            : "Tension hit threshold — auto-fired a Random Event. Tension reset to 0.",
+          true);
+      }
+      return;
+    }
+    saveState();
+    updateTension();
+  }
+  function updateTension() {
+    $("tVal").textContent = state.tension;
+    $("tVal").classList.toggle("high", state.tension >= state.threshold - 2);
+    $("tThr").textContent = state.threshold;
+  }
+
+  // ---- banner ----
+  function showBanner(label, ans, extra, fresh) {
+    const b = $("banner");
+    $("banLabel").textContent = label;
+    $("banAns").innerHTML = ans;
+    $("banExtra").textContent = extra || "";
+    b.classList.add("show");
+    if (fresh) {
+      b.classList.remove("fresh");
+      void b.offsetWidth;
+      b.classList.add("fresh");
+    }
+  }
+
+  // ---- field renderers ----
+  function phraseEvent(ev) {
+    const v = (ev && ev.verb) || "—";
+    const a = (ev && ev.adjective) || "—";
+    const n = (ev && ev.noun) || "—";
+    return `<span style="color:var(--red);font-weight:700">${escapeHtml(v)}</span> · ` +
+           `<span style="color:var(--accent);font-weight:700">${escapeHtml(a)}</span> · ` +
+           `<span style="color:var(--blue);font-weight:700">${escapeHtml(n)}</span>`;
+  }
+
+  function renderDifficulty(c) {
+    $("diffVal").textContent = c.difficulty != null ? c.difficulty : "—";
+    const scale = $("diffScale"); scale.innerHTML = "";
+    for (let i = 1; i <= 10; i++) {
+      const sp = document.createElement("span");
+      if (c.difficulty != null && i <= c.difficulty) sp.classList.add("on");
+      scale.appendChild(sp);
+    }
+  }
+  function renderOdds(c, highlight) {
+    const o = c.odds || {};
+    function setRow(rowId, valId, raw, tier) {
+      const v = raw == null ? "—" : raw;
+      const upper = String(v).toUpperCase().replace("!", "");
+      const cls = String(v) === "YES!" ? "YES"
+                : String(v) === "NO!"  ? "NO"
+                : upper === "YES"      ? "yes"
+                : upper === "NO"       ? "no"
+                : "";
+      const el = $(valId);
+      el.textContent = v;
+      el.className = "ans " + cls;
+      $(rowId).classList.toggle("active", highlight === tier);
+    }
+    setRow("oddsBad",  "oddsBadV",  o.bad,  "bad");
+    setRow("oddsEven", "oddsEvenV", o.even, "even");
+    setRow("oddsGood", "oddsGoodV", o.good, "good");
+  }
+  function renderDice(c) {
+    const d = c.dice || {};
+    $("d4").textContent  = d.d4  != null ? d.d4  : "—";
+    $("d6").textContent  = d.d6  != null ? d.d6  : "—";
+    $("d8").textContent  = d.d8  != null ? d.d8  : "—";
+    $("d10").textContent = d.d10 != null ? d.d10 : "—";
+    $("d12").textContent = d.d12 != null ? d.d12 : "—";
+    $("d20").textContent = d.d20 != null ? d.d20 : "—";
+    if (d.d100tens != null && d.d100units != null) {
+      $("d100").textContent = `${d.d100tens} · ${d.d100units}`;
+    } else { $("d100").textContent = "— · —"; }
+  }
+  function renderRune(c) {
+    $("runeName").textContent = c.rune || "—";
+    $("runeGloss").textContent = c.runeGloss || "Tarot-style symbol prompt.";
+  }
+  function renderElement(c) {
+    const body = $("elemBody");
+    if (c.element) {
+      body.innerHTML = `<span class="badge ${escapeHtml(c.element)}">${escapeHtml(c.element)}</span>`;
+    } else {
+      body.innerHTML = `<div class="meta" style="text-align:center;color:var(--ink-dim);">—</div>`;
+    }
+  }
+  function renderEvent(c) {
+    const e = c.event || {};
+    $("evVerb").textContent = e.verb || "—";
+    $("evAdj").textContent  = e.adjective || "—";
+    $("evNoun").textContent = e.noun || "—";
+  }
+  function renderSensory(c) {
+    const s = c.sensory || {};
+    $("sHear").textContent  = s.hear  || "—";
+    $("sSee").textContent   = s.see   || "—";
+    $("sFeel").textContent  = s.feel  || "—";
+    $("sSmell").textContent = s.smell || "—";
+  }
+  function renderTags(c) {
+    const t = (c.tags || []).filter(Boolean);
+    $("tagRow").innerHTML = t.length
+      ? t.map((x) => `<span class="tag">${escapeHtml(x)}</span>`).join("")
+      : `<span class="meta">—</span>`;
+  }
+  function renderScatter(c) {
+    const s = c.scatter || {};
+    const grid = $("scatGrid"); grid.innerHTML = "";
+    const dirAt = {};
+    Object.keys(SCATTER_GRID_POS).forEach((d) => { dirAt[SCATTER_GRID_POS[d]] = d; });
+    for (let i = 0; i < 9; i++) {
+      const dot = document.createElement("div");
+      dot.className = "dot" + (i === 4 ? " center" : "");
+      const dirLabel = dirAt[i] || "";
+      if (i === 4) dot.textContent = s.hit === true ? "✓" : s.hit === false ? "✗" : "•";
+      else dot.textContent = dirLabel;
+      if (s.dir && dirLabel === s.dir) dot.classList.add("on");
+      grid.appendChild(dot);
+    }
+    if (s.hit === true)       $("scatHit").innerHTML = `<span class="hit">HIT</span>`;
+    else if (s.hit === false) $("scatHit").innerHTML = `<span class="miss">MISS</span>`;
+    else                       $("scatHit").innerHTML = "—";
+  }
+  function renderBelongings(c) {
+    const b = c.belongings || {};
+    $("belCat").textContent = b.category || "—";
+    const items = (b.items || []).filter(Boolean);
+    $("belItems").innerHTML = items.length
+      ? items.map((x) => `<span>${escapeHtml(x)}</span>`).join("")
+      : `<span class="meta">—</span>`;
+  }
+  function renderNames(c) {
+    const n = (c.names || []).filter(Boolean);
+    $("nameRow").innerHTML = n.length
+      ? n.map((x) => `<span>${escapeHtml(x)}</span>`).join("")
+      : `<span class="meta">—</span>`;
+  }
+  function renderCatalyst(c) {
+    $("catText").innerHTML = c.catalyst
+      ? escapeHtml(c.catalyst)
+      : `<span class="meta">—</span>`;
+  }
+  function renderLocation(c) {
+    $("locText").innerHTML = c.location
+      ? escapeHtml(c.location)
+      : `<span class="meta">—</span>`;
+  }
+  function renderVV(c) {
+    $("virtVal").textContent = c.virtue || "—";
+    $("viceVal").textContent = c.vice   || "—";
+  }
+  function renderCardId(c, idx) {
+    $("cardId").textContent = c == null ? "No card" :
+      `Card ${c.id != null ? c.id : (idx != null ? idx + 1 : "?")} of ${DECK.length}`;
+  }
+
+  function renderAll(c, oddsHl) {
+    if (!c) return;
+    renderDifficulty(c);
+    renderOdds(c, oddsHl);
+    renderDice(c);
+    renderRune(c);
+    renderElement(c);
+    renderEvent(c);
+    renderSensory(c);
+    renderTags(c);
+    renderScatter(c);
+    renderBelongings(c);
+    renderNames(c);
+    renderCatalyst(c);
+    renderLocation(c);
+    renderVV(c);
+    renderCardId(c, state.lastCardIdx);
+  }
+
+  // ---- handlers ----
+  // Flash the named cell to make panel updates obvious. q values like
+  // "odds-bad" / "odds-even" / "odds-good" all flash the "odds" cell.
+  const CELL_FOR_Q = {
+    difficulty: "difficulty",
+    "odds-bad": "odds", "odds-even": "odds", "odds-good": "odds",
+    dice: "dice", rune: "rune", element: "element",
+    event: "event", sensory: "sensory", tags: "tags",
+    scatter: "scatter", belongings: "belongings",
+    names: "names", catalyst: "catalyst",
+    location: "location", vv: "vv",
+  };
+  function flashCell(qOrCls) {
+    const cls = CELL_FOR_Q[qOrCls] || qOrCls;
+    const cell = document.querySelector(".cell." + cls);
+    if (!cell) return;
+    cell.classList.remove("flash");
+    void cell.offsetWidth;
+    cell.classList.add("flash");
+  }
+
+  function handleAsk(q) {
+    if (!hasDeck()) return;
+    const c = drawCard();
+    bumpTension();
+    flashCell(q);
+    if (q === "draw") {
+      renderAll(c);
+      showBanner("Card drawn", `Card ${c.id != null ? c.id : ""}`, "All 14 fields populated.", true);
+      return;
+    }
+    if (q === "difficulty") {
+      renderAll(c);
+      showBanner("Difficulty", c.difficulty != null ? String(c.difficulty) : "—",
+        "1–10 bell curve.", true);
+      return;
+    }
+    if (q === "odds-bad" || q === "odds-even" || q === "odds-good") {
+      const tier = q.slice(5);
+      renderAll(c, tier);
+      const o = c.odds || {};
+      const v = o[tier];
+      showBanner(`Likely Odds (${tier})`, v || "—",
+        v && v.indexOf("!") >= 0 ? "Emphatic — read as decisive." : "", true);
+      return;
+    }
+    if (q === "dice") {
+      renderAll(c);
+      const d = c.dice || {};
+      showBanner("Dice", `d4=${d.d4 ?? "—"} · d6=${d.d6 ?? "—"} · d20=${d.d20 ?? "—"}`,
+        "All seven values populated above.", true);
+      return;
+    }
+    if (q === "rune")    { renderAll(c); showBanner("Rune", escapeHtml(c.rune || "—")); return; }
+    if (q === "element") { renderAll(c); showBanner("Element", escapeHtml(c.element || "—")); return; }
+    if (q === "event")   {
+      renderAll(c);
+      showBanner("Random Event", c.event ? phraseEvent(c.event) : "—", "Verb · Adjective · Noun.", true);
+      return;
+    }
+    if (q === "sensory") {
+      renderAll(c);
+      const s = c.sensory || {};
+      showBanner("Sensory", "—", `Hear: ${s.hear || "—"} · See: ${s.see || "—"} · Feel: ${s.feel || "—"} · Smell: ${s.smell || "—"}`, true);
+      return;
+    }
+    if (q === "tags") {
+      renderAll(c);
+      showBanner("Tag Symbols", (c.tags || []).join(" · ") || "—", "3 of 10 — assign meanings per scene.", true);
+      return;
+    }
+    if (q === "scatter") {
+      renderAll(c);
+      const s = c.scatter || {};
+      const hit = s.hit === true ? "HIT" : s.hit === false ? "MISS" : "—";
+      showBanner("Scatter", `${s.dir || "—"} · ${hit}`, "", true);
+      return;
+    }
+    if (q === "belongings") {
+      renderAll(c);
+      const b = c.belongings || {};
+      showBanner("Belongings", b.category || "—", (b.items || []).join(" · "), true);
+      return;
+    }
+    if (q === "names") {
+      renderAll(c);
+      showBanner("Names", (c.names || []).join(" · ") || "—", "", true);
+      return;
+    }
+    if (q === "catalyst") { renderAll(c); showBanner("Catalyst", escapeHtml(c.catalyst || "—")); return; }
+    if (q === "location") { renderAll(c); showBanner("Location", escapeHtml(c.location || "—")); return; }
+    if (q === "vv") {
+      renderAll(c);
+      showBanner("Virtue / Vice",
+        `<span style="color:var(--green)">${escapeHtml(c.virtue || "—")}</span> · ` +
+        `<span style="color:var(--red)">${escapeHtml(c.vice || "—")}</span>`,
+        "", true);
+      return;
+    }
+  }
+
+  // ---- NPC reaction scale (5-step) ----
+  const REACTION_SCALE = [
+    { range: [1, 3],   key: "hostile",   label: "Hostile",
+      note: "Open antagonism — refuses, threatens, attacks if cornered." },
+    { range: [4, 8],   key: "wary",      label: "Wary",
+      note: "Defensive. Asks first, decides slow, won't commit to anything." },
+    { range: [9, 14],  key: "neutral",   label: "Neutral",
+      note: "Indifferent. Will hear you out; no preference either way." },
+    { range: [15, 20], key: "friendly",  label: "Friendly",
+      note: "Warm, willing. Offers a small gesture without being asked." },
+    { range: [21, 23], key: "helpful",   label: "Helpful",
+      note: "Goes out of their way. Offers active help, info, or a favour." },
+  ];
+  function rollReaction() {
+    const ref = 1 + rand(23);
+    const slot = REACTION_SCALE.find((s) => ref >= s.range[0] && ref <= s.range[1]);
+    return Object.assign({ ref }, slot);
+  }
+
+  // ---- Threads / Characters lists ----
+  const L = window.GMAListUtils;
+  function activePack() {
+    const packs = window.GENRE_PACKS || {};
+    return state.genre && state.genre !== "card" ? packs[state.genre] : null;
+  }
+
+  // For each list, the currently-edited item id (or null). Lets the dialog
+  // toggle a single inline edit form without managing per-row state.
+  let editingId = { threads: null, characters: null };
+
+  function listItemHTML(entry, listKey) {
+    const id = escapeHtml(entry.id);
+    const editing = editingId[listKey] === entry.id;
+    if (editing) {
+      return `<div class="list-item${entry.archived ? " archived" : ""}" data-id="${id}">
+        <form class="edit-form" data-list="${listKey}" data-id="${id}">
+          <input type="text" name="name" value="${escapeHtml(entry.name)}" required maxlength="80">
+          <textarea name="notes" placeholder="Notes (optional)…" maxlength="400">${escapeHtml(entry.notes || "")}</textarea>
+          <div class="actions">
+            <button type="submit">Save</button>
+            <button type="button" data-act="cancel">Cancel</button>
+          </div>
+        </form>
+      </div>`;
+    }
+    const notes = entry.notes ? `<div class="notes">${escapeHtml(entry.notes)}</div>` : "";
+    return `<div class="list-item${entry.archived ? " archived" : ""}" data-id="${id}">
+      <div class="name">${escapeHtml(entry.name) || "(unnamed)"}</div>
+      ${notes}
+      <div class="actions">
+        <button type="button" data-act="edit"     data-list="${listKey}" data-id="${id}">edit</button>
+        <button type="button" data-act="archive"  data-list="${listKey}" data-id="${id}">${entry.archived ? "unarchive" : "archive"}</button>
+        <button type="button" data-act="delete" class="delete" data-list="${listKey}" data-id="${id}">delete</button>
+      </div>
+    </div>`;
+  }
+  function renderLists() {
+    const renderCol = (listKey, listArr, itemsId, countId) => {
+      const active = listArr.filter((e) => !e.archived);
+      const archived = listArr.filter((e) => e.archived);
+      const itemsEl = $(itemsId);
+      itemsEl.innerHTML = listArr.length
+        ? listArr.map((e) => listItemHTML(e, listKey)).join("")
+        : `<div class="empty-msg">Nothing yet — add one below.</div>`;
+      $(countId).textContent =
+        listArr.length ? `${active.length} active${archived.length ? ` · ${archived.length} archived` : ""}` : "";
+    };
+    renderCol("threads",    state.threads,    "threadsItems", "threadsCount");
+    renderCol("characters", state.characters, "charsItems",   "charsCount");
+  }
+  function listFromKey(key) {
+    return key === "threads" ? state.threads : key === "characters" ? state.characters : null;
+  }
+  function handleListClick(e) {
+    const btn = e.target.closest("button[data-act]");
+    if (!btn) return;
+    const act = btn.getAttribute("data-act");
+    const listKey = btn.getAttribute("data-list");
+    const id = btn.getAttribute("data-id");
+    const list = listFromKey(listKey);
+    if (!list) return;
+    if (act === "edit") {
+      editingId[listKey] = id;
+      renderLists();
+    } else if (act === "archive") {
+      const entry = list.find((x) => x.id === id);
+      if (entry) L.archiveEntry(list, id, !entry.archived);
+      saveState(); renderLists();
+    } else if (act === "delete") {
+      if (!confirm("Delete this entry?")) return;
+      L.deleteEntry(list, id);
+      if (editingId[listKey] === id) editingId[listKey] = null;
+      saveState(); renderLists();
+    } else if (act === "cancel") {
+      editingId[listKey] = null;
+      renderLists();
+    }
+  }
+  function handleListSubmit(e) {
+    if (!e.target.matches(".edit-form")) return;
+    e.preventDefault();
+    const listKey = e.target.getAttribute("data-list");
+    const id = e.target.getAttribute("data-id");
+    const list = listFromKey(listKey);
+    if (!list) return;
+    L.updateEntry(list, id, {
+      name:  e.target.elements.name.value.trim(),
+      notes: e.target.elements.notes.value.trim(),
+    });
+    editingId[listKey] = null;
+    saveState(); renderLists();
+  }
+
+  // ---- Quick NPC ----
+  let lastNpc = null;
+  function pickNpcName() {
+    const p = activePack();
+    if (p && p.names) {
+      const all = [].concat(p.names.male || [], p.names.female || [], p.names.neutral || []);
+      if (all.length) return pick(all);
+    }
+    if (lastCard && lastCard.names && lastCard.names.length) return pick(lastCard.names);
+    if (hasDeck()) {
+      const c = DECK[rand(DECK.length)];
+      if (c.names && c.names.length) return pick(c.names);
+    }
+    return "(no name available)";
+  }
+  function pickNpcBelongings() {
+    const p = activePack();
+    if (p && p.belongings && p.belongings.length) return pick(p.belongings);
+    if (lastCard && lastCard.belongings && lastCard.belongings.category) return lastCard.belongings;
+    if (hasDeck()) {
+      const c = DECK[rand(DECK.length)];
+      if (c.belongings && c.belongings.category) return c.belongings;
+    }
+    return null;
+  }
+  function generateNpc() {
+    if (!hasDeck()) return null;
+    const c = DECK[rand(DECK.length)];
+    return {
+      name:    pickNpcName(),
+      reaction: rollReaction(),
+      virtue:  c.virtue || null,
+      vice:    c.vice || null,
+      element: c.element || null,
+      belongings: pickNpcBelongings(),
+    };
+  }
+  function renderNpcPopup(npc) {
+    if (!npc) {
+      $("npcContent").innerHTML = `<div class="empty-msg" style="color:var(--ink-dim);">Load cards first.</div>`;
+      return;
+    }
+    const r = npc.reaction || {};
+    const bel = npc.belongings;
+    const belTxt = bel
+      ? `<b>${escapeHtml(bel.category || "")}</b>${(bel.items || []).length ? ": " + (bel.items || []).map(escapeHtml).join(", ") : ""}`
+      : "—";
+    $("npcContent").innerHTML =
+      `<div class="npc-row"><div class="lbl">Name</div><div class="v name">${escapeHtml(npc.name)}</div></div>` +
+      `<div class="npc-row"><div class="lbl">Reaction</div><div class="v reaction ${r.key || ""}">${escapeHtml(r.label || "—")}</div></div>` +
+      (r.note ? `<div class="npc-row"><div class="lbl"></div><div class="reaction-note">${escapeHtml(r.note)}</div></div>` : "") +
+      `<div class="npc-row"><div class="lbl">Virtue</div><div class="v virtue">${escapeHtml(npc.virtue || "—")}</div></div>` +
+      `<div class="npc-row"><div class="lbl">Vice</div><div class="v vice">${escapeHtml(npc.vice || "—")}</div></div>` +
+      (npc.element ? `<div class="npc-row"><div class="lbl">Element</div><div class="v">${escapeHtml(npc.element)}</div></div>` : "") +
+      `<div class="npc-row"><div class="lbl">Carrying</div><div class="v">${belTxt}</div></div>`;
+    $("npcSaveName").value = npc.name || "";
+    $("npcSavedMsg").style.display = "none";
+  }
+  function openNpcDialog() {
+    if (!hasDeck()) {
+      alert("Load cards first (see cards-howto.md).");
+      return;
+    }
+    lastNpc = generateNpc();
+    renderNpcPopup(lastNpc);
+    $("npcDialog").showModal();
+  }
+
+  // ---- wire up ----
+  $("btnDraw").addEventListener("click", () => handleAsk("draw"));
+  $("btnLists").addEventListener("click", () => { renderLists(); $("listsDialog").showModal(); });
+  $("btnQuickNpc").addEventListener("click", openNpcDialog);
+
+  // Lists dialog: add forms + per-item edit/archive/delete + edit-form submit
+  $("threadsAddForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const v = $("threadsAddInput").value.trim();
+    if (!v) return;
+    L.addEntry(state.threads, v, "");
+    $("threadsAddInput").value = "";
+    saveState(); renderLists();
+  });
+  $("charsAddForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const v = $("charsAddInput").value.trim();
+    if (!v) return;
+    L.addEntry(state.characters, v, "");
+    $("charsAddInput").value = "";
+    saveState(); renderLists();
+  });
+  $("threadsItems").addEventListener("click",  handleListClick);
+  $("charsItems").addEventListener("click",    handleListClick);
+  $("threadsItems").addEventListener("submit", handleListSubmit);
+  $("charsItems").addEventListener("submit",   handleListSubmit);
+
+  // NPC popup actions
+  $("npcReroll").addEventListener("click", () => {
+    if (!hasDeck()) return;
+    lastNpc = generateNpc();
+    renderNpcPopup(lastNpc);
+  });
+  $("npcSave").addEventListener("click", () => {
+    if (!lastNpc) return;
+    const name = ($("npcSaveName").value.trim() || lastNpc.name || "").trim();
+    if (!name) return;
+    const r = lastNpc.reaction || {};
+    const notes = [
+      r.label ? `${r.label}.` : "",
+      lastNpc.virtue ? `Virtue: ${lastNpc.virtue}.` : "",
+      lastNpc.vice ? `Vice: ${lastNpc.vice}.` : "",
+    ].filter(Boolean).join(" ");
+    L.addEntry(state.characters, name, notes);
+    saveState();
+    $("npcSavedMsg").style.display = "block";
+  });
+
+  $("btnHelp").addEventListener("click", () => $("helpDialog").showModal());
+  $("btnReset").addEventListener("click", () => {
+    if (!confirm("Reset Tension to 0 and clear the displayed card?")) return;
+    state.tension = 0; state.lastCardIdx = null; saveState();
+    lastCard = null;
+    $("banner").classList.remove("show");
+    $("cardId").textContent = "No card";
+    document.querySelectorAll(".cell .body span, .cell .body div").forEach(() => {});
+    // Re-render with empty placeholders
+    const empty = { difficulty: null, odds: {}, dice: {}, rune: null, element: null,
+      event: {}, sensory: {}, tags: [], scatter: {}, belongings: { items: [] },
+      names: [], catalyst: null, location: null, virtue: null, vice: null };
+    renderAll(empty);
+    $("cardId").textContent = "No card";
+    updateTension();
+  });
+  $("tDown").addEventListener("click", () => { state.tension = Math.max(0, state.tension - 1); saveState(); updateTension(); });
+  $("tUp").addEventListener("click",   () => { state.tension = state.tension + 1; saveState(); updateTension();
+    if (state.tension >= state.threshold) {
+      state.tension = 0; saveState(); updateTension();
+      if (hasDeck()) {
+        const c = drawCard(); renderAll(c);
+        showBanner("Tension event!", c.event ? phraseEvent(c.event) : "—",
+          "Threshold reached — auto-fired a Random Event. Tension reset.", true);
+      }
+    }
+  });
+
+  document.querySelectorAll("[data-q]").forEach((b) => {
+    b.addEventListener("click", () => handleAsk(b.getAttribute("data-q")));
+  });
+
+  // Genre selector: changing genre re-applies the overlay to the current card
+  // (so the user sees the new flavour immediately without redrawing).
+  $("genreSel").addEventListener("change", (e) => {
+    state.genre = e.target.value;
+    saveState();
+    if (state.lastCardIdx != null && DECK[state.lastCardIdx]) {
+      lastCard = applyGenre(DECK[state.lastCardIdx]);
+      renderAll(lastCard);
+    }
+  });
+
+  // ---- init ----
+  function setEnabledState() {
+    const enabled = hasDeck();
+    document.querySelectorAll("[data-q], #btnDraw").forEach((b) => { b.disabled = !enabled; });
+    $("emptyBanner").style.display = enabled ? "none" : "block";
+    $("deckSize").textContent = enabled ? `${DECK.length} card${DECK.length === 1 ? "" : "s"} loaded.` : "";
+  }
+  setEnabledState();
+  updateTension();
+  $("genreSel").value = state.genre || "card";
+  // Restore last card if state has one (apply current genre at restore time)
+  if (state.lastCardIdx != null && DECK[state.lastCardIdx]) {
+    lastCard = applyGenre(DECK[state.lastCardIdx]);
+    renderAll(lastCard);
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>rpgGenerator — solo RPG oracle apps</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="Universal-Oracle/core/theme.css">
+<style>
+.intro { max-width: 880px; margin: 0 auto; padding: 24px 24px 0; color: var(--text); }
+.intro h2 { margin: 0 0 6px; font-size: 22px; color: var(--accent); }
+.intro p { color: var(--muted); font-size: 14px; line-height: 1.55; margin: 0 0 6px; }
+.intro p b { color: var(--text); }
+footer { padding: 18px 24px; color: var(--muted); font-size: 12px; text-align: center; }
+footer a { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>rpgGenerator</h1>
+  <span class="sub">— two card-based oracle apps for solo RPG play</span>
+</header>
+
+<div class="intro">
+  <h2>Pick your app</h2>
+  <p>Both apps run entirely in the browser, save state to <code>localStorage</code>, and need no server. Open either tile to start.</p>
+</div>
+
+<main class="tiles">
+
+  <a href="Universal-Oracle/rpg/index.html" class="tile">
+    <h2>Universal RPG Oracle</h2>
+    <p>GMA-style oracle with six genre packs (Fantasy, Post-Apoc, Cyberpunk, Weird Horror, Steampunk, Sci-Fi). Yes/no with odds, NPC reactions, virtue + vice, catalyst hooks, sensory snippets, names &amp; locations. No card data needed — content ships in the genre packs.</p>
+    <div class="when"><b>Use when:</b> you want a self-contained oracle that runs out of the box across six genres.</div>
+  </a>
+
+  <a href="Gamemaster/app/index.html" class="tile">
+    <h2>GMA Local Deck</h2>
+    <p>Front-end for a personal copy of the GameMaster's Apprentice deck. All 14 randomizers + Tension counter + Threads/Characters lists + Quick NPC generator. Ships with an empty <code>cards.js</code> — populate from your own PnP using the included <code>extract.py</code> + <code>merge.py</code> (see <code>Gamemaster/app/cards-howto.md</code>).</p>
+    <div class="when"><b>Use when:</b> you own the GMA PnP and want a digital local front-end.</div>
+  </a>
+
+</main>
+
+<footer>
+  Universal RPG Oracle is original work (mechanics inspired by GameMaster's Apprentice and Mythic GME).
+  GMA Local Deck is a front-end only — card content is never bundled; you supply your own legally-owned deck data.
+</footer>
+
+</body>
+</html>

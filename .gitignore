@@ -1,0 +1,38 @@
+# Third-party deck content — never commit. The apps are front-ends only;
+# users populate these on their own machines from legally-owned source decks.
+
+# GMA card data (extracted or hand-curated from the GMA PnP)
+Gamemaster/app/cards.js
+Gamemaster/app/cards.json
+Gamemaster/app/raw.txt
+Gamemaster/app/_extracted_guide.txt
+Gamemaster/_pdf_pages/
+
+# Sibling apps that bake in third-party decks (Solo Cards, Solo-System)
+Universal-Oracle/skirmish/
+Universal-Oracle/strategic/
+Universal-Oracle/boardgame/
+
+# Source PDFs and printable artefacts — never commit
+*.pdf
+*.zip
+*.doc
+*.docx
+
+# Local artefacts
+*.log
+.DS_Store
+Thumbs.db
+node_modules/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Python (extractor scripts)
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
