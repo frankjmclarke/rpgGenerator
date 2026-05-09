@@ -224,6 +224,17 @@ main { padding: 1rem; max-width: 1400px; margin: 0 auto;
 /* Location */
 .cell.location .text { font-size: 0.92rem; line-height: 1.5; }
 
+/* NPC Action (#15) */
+.cell.npc-action .target { font-size: 0.95rem; line-height: 1.4; }
+.cell.npc-action .phrase { font-size: 0.95rem; line-height: 1.5; min-height: 1.4em; }
+.cell.npc-action .band-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.npc-band { padding: 2px 10px; border-radius: 4px; font-size: 0.7rem;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+.npc-band.quiet    { background: #1a4a2a; color: #6dd47a; }
+.npc-band.stirring { background: #4a3a1a; color: #f1c14a; }
+.npc-band.dramatic { background: #4a1a1a; color: #ff8a8a; }
+.cell.npc-action .focus { font-size: 0.85rem; color: var(--ink); font-weight: 600; }
+
 /* Virtue & Vice */
 .cell.vv { grid-column: span 1; }
 .cell.vv .vrow { display: grid; grid-template-columns: 60px 1fr;
@@ -544,6 +555,19 @@ dialog .x {
       </div>
     </div>
 
+    <div class="cell npc-action">
+      <h3>15 · NPC Action <button data-q="npc-action">draw</button></h3>
+      <div class="body">
+        <div class="target" id="npcActionTarget"><span class="meta">Click draw — picks a random Thread or Character.</span></div>
+        <div class="phrase" id="npcActionPhrase">—</div>
+        <div class="band-row">
+          <span class="npc-band" id="npcActionBand">—</span>
+          <span class="focus" id="npcActionFocus">—</span>
+        </div>
+        <div class="meta" id="npcActionHint">Tension level decides what they do.</div>
+      </div>
+    </div>
+
   </div>
 </main>
 
@@ -578,6 +602,15 @@ dialog .x {
 
 <h3>Tension</h3>
 <p>Each time you draw a card or rate a question, Tension goes up by 1. When it hits the threshold (default 11), a Random Event auto-fires and Tension resets to 0. That's the GMA "every-eleven-questions surprise" loop. Adjust manually with the <code>+ / −</code> buttons — raise it after a frantic scene, lower it after a quiet one.</p>
+
+<h3>NPC Action (panel 15)</h3>
+<p>Click <b>draw</b> on the NPC Action panel to ask <i>"what does someone from my Lists do this scene?"</i> The app picks a random active Thread or Character, draws a card for the verb / adjective / noun, and lets <b>Tension</b> decide the framing:</p>
+<ul>
+  <li><b>Quiet</b> (tension below ⅓ threshold) — <i>NPC Positive</i>: they help, advance a thread, reveal something useful.</li>
+  <li><b>Stirring</b> (⅓ to ⅔) — <i>NPC Action</i>: ambiguous in-character beat, the scene shifts.</li>
+  <li><b>Dramatic</b> (⅔ or higher) — <i>NPC Negative</i>: they oppose, betray, complicate.</li>
+</ul>
+<p>If both Lists are empty, the panel prompts you to add Threads or Characters first.</p>
 
 <h3>Threads &amp; Characters (Lists)</h3>
 <p>Cards have no memory of previous state — but the app does. Click <b>Lists</b> to manage two persistent rosters: <b>Threads</b> (active plot threads) and <b>Characters</b> (NPCs you've met). When Tension auto-fires a Random Event, the app picks a random active entry from these lists and surfaces it in the banner — so the surprise anchors to story you've already established instead of a brand-new stranger every time.</p>
@@ -801,6 +834,20 @@ dialog .x {
   const SCATTER_GRID_POS = { NW:0, N:1, NE:2, W:3, E:5, SW:6, S:7, SE:8 };
 
   // ---- tension ----
+  // Three bands map to Mythic-style focus categories. Used by NPC Action.
+  function tensionBand(t, threshold) {
+    const ratio = (t || 0) / Math.max(1, threshold);
+    if (ratio < 1 / 3) return { key: "quiet", label: "Quiet",
+      focus: "NPC Positive",
+      hint: "They help, advance a thread, reveal something useful." };
+    if (ratio < 2 / 3) return { key: "stirring", label: "Stirring",
+      focus: "NPC Action",
+      hint: "Ambiguous in-character beat. The scene shifts." };
+    return { key: "dramatic", label: "Dramatic",
+      focus: "NPC Negative",
+      hint: "They oppose, betray, complicate. Don't soften." };
+  }
+
   function tensionAnchor() {
     // When Tension auto-fires, pick a random active Character or Thread (if any)
     // to anchor the event in story we've established.
@@ -1017,6 +1064,7 @@ dialog .x {
     scatter: "scatter", belongings: "belongings",
     names: "names", catalyst: "catalyst",
     location: "location", vv: "vv",
+    "npc-action": "npc-action",
   };
   function flashCell(qOrCls) {
     const cls = CELL_FOR_Q[qOrCls] || qOrCls;
@@ -1105,6 +1153,12 @@ dialog .x {
         "", true);
       return;
     }
+  }
+
+  // NPC Action has its own handler (uses Lists + tension band, not handleAsk)
+  function handleNpcAction() {
+    if (!hasDeck()) return;
+    drawNpcAction();
   }
 
   // ---- NPC reaction scale (5-step) ----
@@ -1278,6 +1332,56 @@ dialog .x {
     $("npcSaveName").value = npc.name || "";
     $("npcSavedMsg").style.display = "none";
   }
+  // ---- NPC Action (cell 15) ----
+  // Picks a random active Thread or Character and uses Tension level to set
+  // the focus (NPC Positive / Action / Negative). Reads the band BEFORE
+  // bumping Tension so a threshold-tipping click still labels correctly.
+  function drawNpcAction() {
+    const L = window.GMAListUtils;
+    const candidates = []
+      .concat(L.activeEntries(state.characters || []).map((e) => ({ kind: "Character", entry: e })))
+      .concat(L.activeEntries(state.threads || []).map((e) => ({ kind: "Thread", entry: e })));
+
+    if (!candidates.length) {
+      flashCell("npc-action");
+      $("npcActionTarget").innerHTML = `<span class="meta">No active Threads or Characters.</span>`;
+      $("npcActionPhrase").innerHTML = `<span class="meta">—</span>`;
+      $("npcActionBand").textContent = "—";
+      $("npcActionBand").className = "npc-band";
+      $("npcActionFocus").textContent = "—";
+      $("npcActionHint").textContent = "Click Lists in the header to add some.";
+      showBanner("NPC Action",
+        `<span style="color:var(--ink-dim)">Add Threads or Characters first.</span>`,
+        "Click Lists in the header to add some.", true);
+      return;
+    }
+
+    // Read band BEFORE the tension bump so a click that tips over the
+    // threshold still shows the band the player was in when they acted.
+    const band = tensionBand(state.tension, state.threshold);
+    const target = candidates[rand(candidates.length)];
+    const card = drawCard();
+    bumpTension();
+    flashCell("npc-action");
+    renderAll(card);
+
+    const ev = (card && card.event) || {};
+    const action = phraseEvent(ev);
+    const subject =
+      `<b>${escapeHtml(target.entry.name)}</b> ` +
+      `<span style="color:var(--ink-dim);font-size:0.85em">(${target.kind})</span>`;
+
+    $("npcActionTarget").innerHTML = subject;
+    $("npcActionPhrase").innerHTML = action;
+    $("npcActionBand").textContent = band.label.toUpperCase();
+    $("npcActionBand").className = "npc-band " + band.key;
+    $("npcActionFocus").textContent = band.focus;
+    $("npcActionHint").textContent = band.hint;
+
+    showBanner(`NPC Action · ${band.label} (${band.focus})`,
+      `${subject} — ${action}`, band.hint, true);
+  }
+
   function openNpcDialog() {
     if (!hasDeck()) {
       alert("Load cards first (see cards-howto.md).");
@@ -1365,7 +1469,12 @@ dialog .x {
   });
 
   document.querySelectorAll("[data-q]").forEach((b) => {
-    b.addEventListener("click", () => handleAsk(b.getAttribute("data-q")));
+    const q = b.getAttribute("data-q");
+    if (q === "npc-action") {
+      b.addEventListener("click", handleNpcAction);
+    } else {
+      b.addEventListener("click", () => handleAsk(q));
+    }
   });
 
   // Genre selector: changing genre re-applies the overlay to the current card
