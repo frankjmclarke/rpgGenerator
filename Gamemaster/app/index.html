@@ -357,6 +357,13 @@ dialog .x {
   <h1>GameMaster's Apprentice</h1>
   <span class="sub">— local deck app · all 14 randomizers</span>
   <span class="spacer"></span>
+  <span class="genre-pick" title="Deck source. The Alternative deck is a depersonalised shuffle of the standard one — same field values, scrambled across rows. Generated locally by app/extract/shuffle.py; falls back to Standard if not built.">
+    <span class="lbl">Deck</span>
+    <select id="deckSel">
+      <option value="standard">Standard</option>
+      <option value="alternative">Alternative (shuffled)</option>
+    </select>
+  </span>
   <span class="genre-pick" title="Genre pack. When set, Random Event, Sensory, Belongings, Names, and Location are pulled from the chosen pack instead of the card's printed values.">
     <span class="lbl">Genre</span>
     <select id="genreSel">
@@ -578,8 +585,18 @@ dialog .x {
 <h3>Quick NPC</h3>
 <p>Click <b>Quick NPC</b> to spin a complete NPC from the current deck + active genre pack: name, reaction (1-of-5: Hostile / Wary / Neutral / Friendly / Helpful), virtue, vice, belongings, element. Reroll until one feels right; then <b>Save to Characters</b> to add to your roster.</p>
 
+<h3>Standard vs Alternative deck</h3>
+<p>The <b>Deck</b> selector in the header switches between two local decks:</p>
+<ul>
+  <li><b>Standard</b> — your <code>cards.js</code>.</li>
+  <li><b>Alternative</b> — a depersonalised data-shuffle of the same deck. Each field (catalyst, location, virtue, vice, names, sensory, etc.) is independently permuted across rows; the set of values per field is identical, but no row carries its original combination. Useful for breaking memorisation of card-level pairings, or for scrambled re-runs of familiar material.</li>
+</ul>
+<p>Generate or refresh the alternative deck locally:</p>
+<pre><code>python app/extract/shuffle.py app/cards.js app/cards-alternative.js</code></pre>
+<p>Both <code>cards.js</code> and <code>cards-alternative.js</code> are git-ignored — they never reach the public repo.</p>
+
 <h3>State</h3>
-<p>Tension, last-drawn card, genre, threads, and characters all save to <code>localStorage</code> under <code>oracle.gma.v2</code>. Older <code>oracle.gma.v1</code> data is migrated automatically on first load.</p>
+<p>Tension, last-drawn card, genre, deck, threads, and characters all save to <code>localStorage</code> under <code>oracle.gma.v2</code>. Older <code>oracle.gma.v1</code> data is migrated automatically on first load.</p>
 
 <h3>Mechanics credit</h3>
 <p>The GameMaster's Apprentice is by Nathan Rockwood / Larcenous Designs. This app is a local front-end for a deck you already own; it ships empty and you fill it in.</p>
@@ -635,6 +652,7 @@ dialog .x {
 <script src="packs/age-of-sail.js"></script>
 <script src="lists.js"></script>
 <script src="cards.js"></script>
+<script src="cards-alternative.js" onerror="window.GMA_CARDS_ALTERNATIVE = null;"></script>
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -650,6 +668,7 @@ dialog .x {
   const defaultState = () => ({
     version: 2,
     tension: 0, threshold: 11, lastCardIdx: null, genre: "card",
+    deck: "standard",
     threads: [], characters: [],
   });
   const loadState = () => {
@@ -676,7 +695,7 @@ dialog .x {
   // ---- deck ----
   // Fill any icon-only fields (dice / element / rune / tags / scatter) at
   // load time so every panel always shows a value. Stable for the session.
-  // Spread to avoid mutating window.GMA_CARDS.
+  // Spread to avoid mutating the source array.
   const ELEMENTS = ["Earth", "Fire", "Air", "Water"];
   const SCATTER_DIRS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
   // 24 Elder Futhark rune names (public knowledge):
@@ -692,27 +711,41 @@ dialog .x {
     "Moon", "Sword", "Shield", "Target", "Wand",
   ];
 
-  const DECK = (window.GMA_CARDS || []).map((c) => {
-    const d = c.dice || {};
-    return Object.assign({}, c, {
-      element: ELEMENTS.includes(c.element) ? c.element : pick(ELEMENTS),
-      rune:    c.rune || pick(RUNES),
-      tags:    (c.tags && c.tags.length === 3) ? c.tags : pickN(TAG_SYMBOLS, 3),
-      scatter: (c.scatter && c.scatter.dir)
-        ? c.scatter
-        : { dir: pick(SCATTER_DIRS), hit: rand(2) === 0 },
-      dice: {
-        d4:        d.d4        != null ? d.d4        : 1 + rand(4),
-        d6:        d.d6        != null ? d.d6        : 1 + rand(6),
-        d8:        d.d8        != null ? d.d8        : 1 + rand(8),
-        d10:       d.d10       != null ? d.d10       : rand(10),
-        d12:       d.d12       != null ? d.d12       : 1 + rand(12),
-        d20:       d.d20       != null ? d.d20       : 1 + rand(20),
-        d100tens:  d.d100tens  != null ? d.d100tens  : rand(10),
-        d100units: d.d100units != null ? d.d100units : rand(10),
-      },
+  function buildDeck(source) {
+    return (source || []).map((c) => {
+      const d = c.dice || {};
+      return Object.assign({}, c, {
+        element: ELEMENTS.includes(c.element) ? c.element : pick(ELEMENTS),
+        rune:    c.rune || pick(RUNES),
+        tags:    (c.tags && c.tags.length === 3) ? c.tags : pickN(TAG_SYMBOLS, 3),
+        scatter: (c.scatter && c.scatter.dir)
+          ? c.scatter
+          : { dir: pick(SCATTER_DIRS), hit: rand(2) === 0 },
+        dice: {
+          d4:        d.d4        != null ? d.d4        : 1 + rand(4),
+          d6:        d.d6        != null ? d.d6        : 1 + rand(6),
+          d8:        d.d8        != null ? d.d8        : 1 + rand(8),
+          d10:       d.d10       != null ? d.d10       : rand(10),
+          d12:       d.d12       != null ? d.d12       : 1 + rand(12),
+          d20:       d.d20       != null ? d.d20       : 1 + rand(20),
+          d100tens:  d.d100tens  != null ? d.d100tens  : rand(10),
+          d100units: d.d100units != null ? d.d100units : rand(10),
+        },
+      });
     });
-  });
+  }
+
+  function activeDeckSource() {
+    if (state.deck === "alternative" &&
+        Array.isArray(window.GMA_CARDS_ALTERNATIVE) &&
+        window.GMA_CARDS_ALTERNATIVE.length) {
+      return window.GMA_CARDS_ALTERNATIVE;
+    }
+    // fall back to standard if alternative not loaded
+    return window.GMA_CARDS;
+  }
+
+  let DECK = buildDeck(activeDeckSource());
   const hasDeck = () => DECK.length > 0;
   let lastCard = null;
 
@@ -1346,6 +1379,31 @@ dialog .x {
     }
   });
 
+  // Deck selector: standard <-> alternative (depersonalised shuffle of the
+  // standard deck). Falls back to standard if alternative isn't loaded.
+  $("deckSel").addEventListener("change", (e) => {
+    const want = e.target.value;
+    const altAvailable = Array.isArray(window.GMA_CARDS_ALTERNATIVE) &&
+                         window.GMA_CARDS_ALTERNATIVE.length > 0;
+    if (want === "alternative" && !altAvailable) {
+      alert("Alternative deck not found. Generate it locally with:\n\n" +
+            "python app/extract/shuffle.py app/cards.js app/cards-alternative.js\n\n" +
+            "(see cards-howto.md for details). Falling back to Standard.");
+      e.target.value = "standard";
+      state.deck = "standard";
+    } else {
+      state.deck = want;
+    }
+    saveState();
+    DECK = buildDeck(activeDeckSource());
+    // reset the displayed card so we don't show a stale row from the prior deck
+    state.lastCardIdx = null;
+    lastCard = null;
+    $("banner").classList.remove("show");
+    $("cardId").textContent = "No card";
+    setEnabledState();
+  });
+
   // ---- init ----
   function setEnabledState() {
     const enabled = hasDeck();
@@ -1356,6 +1414,15 @@ dialog .x {
   setEnabledState();
   updateTension();
   $("genreSel").value = state.genre || "card";
+  // Initialise deck selector. If state asked for alternative but the file
+  // isn't loaded, fall back silently.
+  const altLoaded = Array.isArray(window.GMA_CARDS_ALTERNATIVE) &&
+                    window.GMA_CARDS_ALTERNATIVE.length > 0;
+  if (state.deck === "alternative" && !altLoaded) {
+    state.deck = "standard";
+    saveState();
+  }
+  $("deckSel").value = state.deck || "standard";
   // Restore last card if state has one (apply current genre at restore time)
   if (state.lastCardIdx != null && DECK[state.lastCardIdx]) {
     lastCard = applyGenre(DECK[state.lastCardIdx]);

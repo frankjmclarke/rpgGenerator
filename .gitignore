@@ -1,9 +1,11 @@
 # Third-party deck content — never commit. The apps are front-ends only;
 # users populate these on their own machines from legally-owned source decks.
 
-# GMA card data (extracted or hand-curated from the GMA PnP)
+# GMA card data (extracted or hand-curated from the GMA PnP) and any
+# derivative decks produced from it (e.g. shuffle.py output)
 Gamemaster/app/cards.js
 Gamemaster/app/cards.json
+Gamemaster/app/cards-alternative.js
 Gamemaster/app/raw.txt
 Gamemaster/app/_extracted_guide.txt
 Gamemaster/_pdf_pages/
